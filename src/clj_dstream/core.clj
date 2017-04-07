@@ -67,7 +67,7 @@
 (s/def ::lambda float?)
 (s/def ::c_l float?)
 (s/def ::c_m float?)
-
+(s/def ::N pos-int?)
 
 (s/def ::properties (s/keys :req [::c_m
                                   ::c_l
@@ -75,7 +75,8 @@
                                   ::beta
                                   ::dimensions
                                   ::domains
-                                  ::gap_time]))
+                                  ::gap_time]
+                            :opt [::N]))
 
 (s/def ::initialized-clusters boolean?)
 
@@ -166,6 +167,10 @@
   (let [state-after-put (put data)]
     state-after-put))
 
+(defn domains->cell-count [{:keys [::domains]}]
+  ;;TODO
+  9001)
+
 (defn dstream-iterations [state raw-data]
   (println "iters w state:")
   (clojure.pprint/pprint state)
@@ -173,11 +178,22 @@
   (clojure.pprint/pprint raw-data)
   (let [time*      (atom 0)
         the-state* (atom state)]
+    (if-not (get-in state [::properties ::N])
+      (do
+        (reset! the-state* (assoc-in
+                              @the-state*
+                              [::state ::properties ::N]
+                              (domains->cell-count (get-in @the-state* [::state ::properties]))))))
     (doseq [raw-datum raw-data]
-
       (reset! the-state* (one-dstream-iteration (merge @the-state* raw-datum {::t @time*})))
       (swap! time* inc))
     @the-state*))
+
+(defn update-char-vec-label [{:keys [::char-vec ::properties]}]
+  ;;TODO
+  (let [cell-count (get-in properties [::N])
+        dense-coeff (/ (::c_m properties) (* ))
+        sparse-coeff ()]))
 
 (s/fdef one-dstream-iteration
         :args (s/cat :u (s/keys :req [::state ::raw-datum]))
@@ -193,11 +209,21 @@
 
 (s/fdef dstream-iterations
         :args (s/cat :u (s/cat :state (s/keys :req [::state]) :raw-data (s/coll-of (s/keys :req [::raw-datum]))))
-        :ret ::state)
+        :ret (s/keys :req [::state]))
+
+(s/fdef update-char-vec-label
+        :args (s/cat :u (s/keys :req [::char-vec ::properties]))
+        :ret (s/keys :req [::char-vec]) )
+
+(s/fdef domains->cell-count
+        :args (s/cat :u (s/keys :req [::domains]))
+        :ret int?)
 
 (stest/instrument `one-dstream-iteration)
 (stest/instrument `position-value->position-index)
 (stest/instrument `put)
 (stest/instrument `dstream-iterations)
+(stest/instrument `update-char-vec-label)
+(stest/instrument `domains->cell-count)
 
 ;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))
