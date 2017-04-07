@@ -152,7 +152,6 @@
                         ::last-update-time t
                         ::grid-density-at-last-update new-d)
             new-state (assoc-in state [::grid-cells idx] new-cv)]
-        (println "updated grid new state: " idx)
         {::state new-state})
       (let [new-state (assoc-in state
                                 [::grid-cells idx]
@@ -161,7 +160,6 @@
                                  ::grid-density-at-last-update   1.0
                                  ::sporadic-or-normal            ::normal
                                  ::cluster-label                 nil})]
-        (println "new grid new state: " idx)
         {::state new-state}))))
 
 (defn one-dstream-iteration [{:keys [::state ::raw-datum ::t] :as data}]
@@ -193,13 +191,13 @@
         :args (s/cat :u (s/keys :req [::position-value ::domains]))
         :ret ::position-index)
 
-;(s/fdef dstream-iterations
-;        :args (s/cat :u (s/keys :req [::state ::raw-datum]))
-;        :ret ::state)
+(s/fdef dstream-iterations
+        :args (s/cat :u (s/cat :state (s/keys :req [::state]) :raw-data (s/coll-of (s/keys :req [::raw-datum]))))
+        :ret ::state)
 
 (stest/instrument `one-dstream-iteration)
 (stest/instrument `position-value->position-index)
 (stest/instrument `put)
-;(stest/instrument `dstream-iterations)
+(stest/instrument `dstream-iterations)
 
 ;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))

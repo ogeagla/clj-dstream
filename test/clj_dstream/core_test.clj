@@ -20,6 +20,7 @@
 (deftest dstream-iterations
   (testing "Dstream iterations"
     (let [test-state    {::core/state core/test-state}
-          test-raw-data (repeat 10 {::core/raw-datum core/test-raw-data})
+          test-raw-data (repeat 1000 {::core/raw-datum core/test-raw-data})
           final-state   (core/dstream-iterations test-state test-raw-data)]
-      (clojure.pprint/pprint final-state))))
+      (clojure.pprint/pprint final-state)
+      )))
