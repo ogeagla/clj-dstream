@@ -162,15 +162,13 @@
     state-after-put))
 
 (defn phase-space->cell-count [{:keys [::phase-space]}]
-  ;;TODO
-
-  (let [mapped  (map (fn [{:keys [::domain-interval ::domain-end ::domain-start]}]
-                       (-> (- domain-end domain-start)
-                           (/ domain-interval)
-                           int))
-                     phase-space)
-        reduced (reduce * mapped)]
-    reduced))
+  (->>
+    phase-space
+    (map (fn [{:keys [::domain-interval ::domain-end ::domain-start]}]
+           (-> (- domain-end domain-start)
+               (/ domain-interval)
+               int)))
+    (reduce *)))
 
 (defn dstream-iterations [state raw-data]
   (println "iters w state:")
