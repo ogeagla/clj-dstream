@@ -42,20 +42,12 @@
 
 (s/def ::t int?)
 
-(s/def ::time-point (s/keys :req [::t
-                                  ::value
-                                  ::status
-                                  ::label
-                                  ::cluster-label]))
-
-(s/def ::time-points (s/coll-of ::time-point))
-
-(s/def ::last-time-update-time int?)
+(s/def ::last-update-time int?)
 (s/def ::last-time-removed-as-sporadic int?)
 (s/def ::grid-density-at-last-update float?)
 (s/def ::sporadic-or-normal #{::sporadic ::normal})
 
-(s/def ::char-vec (s/keys :req [::last-update-time ::last-time-removed-as-sporadic ::grid-density-at-last-update ::sporadic-or-normal ::cluster-label]))
+(s/def ::char-vec (s/keys :req [::last-update-time ::last-time-removed-as-sporadic ::grid-density-at-last-update ::sporadic-or-normal ::cluster-label ::label]))
 
 (s/def ::grid-cell (s/keys :req [::position-value ::position-index ::char-vec]))
 
@@ -92,7 +84,8 @@
                                       ::last-time-removed-as-sporadic 0
                                       ::grid-density-at-last-update   0.2
                                       ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil}}
+                                      ::cluster-label                 nil
+                                      ::label                         ::dense}}
    ::properties           {::c_m        0.1
                            ::c_l        0.2
                            ::lambda     0.99
@@ -160,7 +153,8 @@
                                  ::last-time-removed-as-sporadic 0
                                  ::grid-density-at-last-update   1.0
                                  ::sporadic-or-normal            ::normal
-                                 ::cluster-label                 nil})]
+                                 ::cluster-label                 nil
+                                 ::label                         ::sparse})]
         {::state new-state}))))
 
 (defn one-dstream-iteration [{:keys [::state ::raw-datum ::t] :as data}]
@@ -181,9 +175,9 @@
     (if-not (get-in state [::properties ::N])
       (do
         (reset! the-state* (assoc-in
-                              @the-state*
-                              [::state ::properties ::N]
-                              (domains->cell-count (get-in @the-state* [::state ::properties]))))))
+                             @the-state*
+                             [::state ::properties ::N]
+                             (domains->cell-count (get-in @the-state* [::state ::properties]))))))
     (doseq [raw-datum raw-data]
       (reset! the-state* (one-dstream-iteration (merge @the-state* raw-datum {::t @time*})))
       (swap! time* inc))
@@ -191,8 +185,8 @@
 
 (defn update-char-vec-label [{:keys [::char-vec ::properties]}]
   ;;TODO
-  (let [cell-count (get-in properties [::N])
-        dense-coeff (/ (::c_m properties) (* ))
+  (let [cell-count   (get-in properties [::N])
+        dense-coeff  (/ (::c_m properties) 1)
         sparse-coeff ()]))
 
 (s/fdef one-dstream-iteration
@@ -213,7 +207,7 @@
 
 (s/fdef update-char-vec-label
         :args (s/cat :u (s/keys :req [::char-vec ::properties]))
-        :ret (s/keys :req [::char-vec]) )
+        :ret (s/keys :req [::char-vec]))
 
 (s/fdef domains->cell-count
         :args (s/cat :u (s/keys :req [::domains]))
