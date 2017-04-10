@@ -38,7 +38,7 @@
 (s/def ::domain-end float?)
 (s/def ::domain-interval (s/and float? pos?))
 (s/def ::domain (s/keys :req [::domain-start ::domain-end ::domain-interval]))
-(s/def ::domains (s/coll-of ::domain))
+(s/def ::phase-space (s/coll-of ::domain))
 
 (s/def ::t int?)
 
@@ -66,7 +66,7 @@
                                   ::lambda
                                   ::beta
                                   ::dimensions
-                                  ::domains
+                                  ::phase-space
                                   ::gap_time]
                             :opt [::N]))
 
@@ -86,38 +86,38 @@
                                       ::sporadic-or-normal            ::normal
                                       ::cluster-label                 nil
                                       ::label                         ::dense}}
-   ::properties           {::c_m        0.1
-                           ::c_l        0.2
-                           ::lambda     0.99
-                           ::beta       0.223
-                           ::dimensions 4
-                           ::domains    [
-                                         {::domain-start    -1.0
-                                          ::domain-end      10.0
-                                          ::domain-interval 0.1}
-                                         {::domain-start    -1.0
-                                          ::domain-end      10.0
-                                          ::domain-interval 0.1}
-                                         {::domain-start    -1.0
-                                          ::domain-end      10.0
-                                          ::domain-interval 0.1}
-                                         {::domain-start    -1.0
-                                          ::domain-end      10.0
-                                          ::domain-interval 0.1}]
-                           ::gap_time   4}
+   ::properties           {::c_m         0.1
+                           ::c_l         0.2
+                           ::lambda      0.99
+                           ::beta        0.223
+                           ::dimensions  4
+                           ::phase-space [
+                                          {::domain-start    -1.0
+                                           ::domain-end      10.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    -1.0
+                                           ::domain-end      10.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    -1.0
+                                           ::domain-end      10.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    -1.0
+                                           ::domain-end      10.0
+                                           ::domain-interval 0.1}]
+                           ::gap_time    4}
    ::initialized-clusters true})
 
 (def test-raw-data
   {::value          0.1
    ::position-value [5.0 5.0 5.0 5.0]})
 
-(defn position-value->position-index [{:keys [::position-value ::domains]}]
-  (if-not (= (count position-value) (count domains))
-    (throw (ex-info "Dimension mismatch" {:keys :data position-value domains})))
+(defn position-value->position-index [{:keys [::position-value ::phase-space]}]
+  (if-not (= (count position-value) (count phase-space))
+    (throw (ex-info "Dimension mismatch" {:keys :data position-value phase-space})))
   (->>
     position-value
     (map-indexed (fn [idx position-val]
-                   (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get domains idx)]
+                   (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)]
                      (if (or (> position-val domain-end)
                              (< position-val domain-start))
                        (throw
@@ -161,9 +161,16 @@
   (let [state-after-put (put data)]
     state-after-put))
 
-(defn domains->cell-count [{:keys [::domains]}]
+(defn phase-space->cell-count [{:keys [::phase-space]}]
   ;;TODO
-  9001)
+
+  (let [mapped  (map (fn [{:keys [::domain-interval ::domain-end ::domain-start]}]
+                       (-> (- domain-end domain-start)
+                           (/ domain-interval)
+                           int))
+                     phase-space)
+        reduced (reduce * mapped)]
+    reduced))
 
 (defn dstream-iterations [state raw-data]
   (println "iters w state:")
@@ -177,7 +184,7 @@
         (reset! the-state* (assoc-in
                              @the-state*
                              [::state ::properties ::N]
-                             (domains->cell-count (get-in @the-state* [::state ::properties]))))))
+                             (phase-space->cell-count (get-in @the-state* [::state ::properties]))))))
     (doseq [raw-datum raw-data]
       (reset! the-state* (one-dstream-iteration (merge @the-state* raw-datum {::t @time*})))
       (swap! time* inc))
@@ -198,7 +205,7 @@
         :ret (s/keys :req [::state]))
 
 (s/fdef position-value->position-index
-        :args (s/cat :u (s/keys :req [::position-value ::domains]))
+        :args (s/cat :u (s/keys :req [::position-value ::phase-space]))
         :ret ::position-index)
 
 (s/fdef dstream-iterations
@@ -209,8 +216,8 @@
         :args (s/cat :u (s/keys :req [::char-vec ::properties]))
         :ret (s/keys :req [::char-vec]))
 
-(s/fdef domains->cell-count
-        :args (s/cat :u (s/keys :req [::domains]))
+(s/fdef phase-space->cell-count
+        :args (s/cat :u (s/keys :req [::phase-space]))
         :ret int?)
 
 (stest/instrument `one-dstream-iteration)
@@ -218,6 +225,6 @@
 (stest/instrument `put)
 (stest/instrument `dstream-iterations)
 (stest/instrument `update-char-vec-label)
-(stest/instrument `domains->cell-count)
+(stest/instrument `phase-space->cell-count)
 
 ;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))
