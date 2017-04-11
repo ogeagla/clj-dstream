@@ -79,38 +79,6 @@
 
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
 
-(def test-state
-  {::grid-cells           {[0 1 2 3] {::last-update-time              0
-                                      ::last-time-removed-as-sporadic 0
-                                      ::grid-density-at-last-update   0.2
-                                      ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil
-                                      ::label                         ::dense}}
-   ::properties           {::c_m         0.1
-                           ::c_l         0.2
-                           ::lambda      0.99
-                           ::beta        0.223
-                           ::dimensions  4
-                           ::phase-space [
-                                          {::domain-start    -1.0
-                                           ::domain-end      10.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    -1.0
-                                           ::domain-end      10.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    -1.0
-                                           ::domain-end      10.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    -1.0
-                                           ::domain-end      10.0
-                                           ::domain-interval 0.1}]
-                           ::gap_time    4}
-   ::initialized-clusters true})
-
-(def test-raw-data
-  {::value          0.1
-   ::position-value [5.0 5.0 5.0 5.0]})
-
 (defn position-value->position-index [{:keys [::position-value ::phase-space]}]
   (if-not (= (count position-value) (count phase-space))
     (throw (ex-info "Dimension mismatch" {:keys :data position-value phase-space})))
@@ -189,10 +157,26 @@
     @the-state*))
 
 (defn update-char-vec-label [{:keys [::char-vec ::properties]}]
-  ;;TODO
-  (let [cell-count   (get-in properties [::N])
-        dense-coeff  (/ (::c_m properties) 1)
-        sparse-coeff ()]))
+  (clojure.pprint/pprint properties)
+  (clojure.pprint/pprint char-vec)
+
+  (let [{:keys [::N ::c_m ::c_l ::lambda]} properties
+        {:keys [::grid-density-at-last-update]} char-vec
+        dense-coeff  (/ c_m
+                        (*
+                          N
+                          (- 1.0 lambda)))
+
+        sparse-coeff (/ c_l
+                        (*
+                          N
+                          (- 1.0 lambda)))
+        new-label    (case [(>= grid-density-at-last-update dense-coeff)
+                            (<= grid-density-at-last-update sparse-coeff)]
+                       [true false] ::dense
+                       [false true] ::sparse
+                       ::transitional)]
+    (assoc char-vec ::label new-label)))
 
 (s/fdef one-dstream-iteration
         :args (s/cat :u (s/keys :req [::state ::raw-datum]))
