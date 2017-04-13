@@ -2,44 +2,10 @@
   (:require [clojure.test :refer :all]
             [clj-dstream.core :as core]))
 
-(def test-state
-  {::grid-cells           {[0 1 2 3] {::last-update-time              0
-                                      ::last-time-removed-as-sporadic 0
-                                      ::grid-density-at-last-update   0.11
-                                      ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil
-                                      ::label                         ::dense}}
-   ::properties           {::N           10000
-                           ::c_m         3.0
-                           ::c_l         0.8
-                           ::lambda      0.998
-                           ::beta        0.3
-                           ::dimensions  4
-                           ::phase-space [
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}]
-                           ::gap_time    4}
-   ::initialized-clusters true})
-
-(def test-raw-data
-  {::value          0.1
-   ::position-value [0.5 0.5 0.5 0.5]})
-
-
 (deftest put-test
   (testing "Puts raw data into state"
-    (let [test-state    {::core/state test-state}
-          test-raw-data {::core/raw-datum test-raw-data}
+    (let [test-state    {::core/state core/test-state}
+          test-raw-data {::core/raw-datum core/test-raw-data}
 
           put-state     (core/put (merge test-state test-raw-data {::core/t      2
                                                                    ::core/lambda 0.3}))
@@ -51,8 +17,8 @@
 
 (deftest dstream-iterations
   (testing "Dstream iterations"
-    (let [test-state    {::core/state test-state}
-          test-raw-data (repeat 10 {::core/raw-datum test-raw-data})
+    (let [test-state    {::core/state core/test-state}
+          test-raw-data (repeat 10 {::core/raw-datum core/test-raw-data})
           final-state   (core/dstream-iterations test-state test-raw-data)])))
 
 (deftest computes-cell-count-from-phase-space
@@ -79,7 +45,7 @@
     (is (= exp-3 (core/phase-space->cell-count p-space-3)))))
 
 (deftest updates-char-vec-label
-  (let [props    (::core/properties test-state)
+  (let [props    (::core/properties core/test-state)
         char-vec {::core/last-update-time              0
                   ::core/last-time-removed-as-sporadic 0
                   ::core/grid-density-at-last-update   0.11
@@ -89,3 +55,12 @@
         updated  (core/update-char-vec-label {::core/properties props
                                               ::core/char-vec   char-vec})]
     (is (= ::core/transitional (::core/label updated)))))
+
+(deftest are-neighbors
+  (let [pos1 [0 1 2 3 4]
+        pos2 [1 1 2 3 4]
+        pos3 [1 2 3 3 4]
+        pos4 [3 1 2 3 4]]
+    (is (= true (core/are-neighbors pos1 pos2)))
+    (is (= false (core/are-neighbors pos2 pos3)))
+    (is (= false (core/are-neighbors pos3 pos4)))))

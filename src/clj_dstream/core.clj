@@ -178,6 +178,27 @@
                        ::transitional)]
     (assoc char-vec ::label new-label)))
 
+(defn are-neighbors [position-indices-1 position-indices-2]
+  (if (= position-indices-1 position-indices-2)
+    true
+    (let [zipped-truthiness (map (fn [[e1 e2]] (= e1 e2)) (map vector position-indices-1 position-indices-2))]
+      (and
+        (= 1 (count (remove true? zipped-truthiness)))
+        (let [index-of-false (.indexOf
+                               (->> (map vector position-indices-1 position-indices-2)
+                                    (map (fn [[a b]] (= a b))))
+                               false)]
+          (and
+            (not (= -1 index-of-false))
+            (= 1
+               (Math/abs
+                 (- (get position-indices-1 index-of-false)
+                    (get position-indices-2 index-of-false))))))))))
+
+(s/fdef are-neighbors
+        :args (s/cat :u (s/cat :indices-1 ::position-index :indices-2 ::position-index))
+        :ret boolean?)
+
 (s/fdef one-dstream-iteration
         :args (s/cat :u (s/keys :req [::state ::raw-datum]))
         :ret (s/keys :req [::state]))
@@ -208,5 +229,39 @@
 (stest/instrument `dstream-iterations)
 (stest/instrument `update-char-vec-label)
 (stest/instrument `phase-space->cell-count)
+(stest/instrument `are-neighbors)
 
 ;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))
+
+(def test-state
+  {::grid-cells           {[0 1 2 3] {::last-update-time              0
+                                      ::last-time-removed-as-sporadic 0
+                                      ::grid-density-at-last-update   0.11
+                                      ::sporadic-or-normal            ::normal
+                                      ::cluster-label                 nil
+                                      ::label                         ::dense}}
+   ::properties           {::N           10000
+                           ::c_m         3.0
+                           ::c_l         0.8
+                           ::lambda      0.998
+                           ::beta        0.3
+                           ::dimensions  4
+                           ::phase-space [
+                                          {::domain-start    0.0
+                                           ::domain-end      1.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    0.0
+                                           ::domain-end      1.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    0.0
+                                           ::domain-end      1.0
+                                           ::domain-interval 0.1}
+                                          {::domain-start    0.0
+                                           ::domain-end      1.0
+                                           ::domain-interval 0.1}]
+                           ::gap_time    4}
+   ::initialized-clusters true})
+
+(def test-raw-data
+  {::value          0.1
+   ::position-value [0.5 0.5 0.5 0.5]})
