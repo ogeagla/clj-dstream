@@ -181,19 +181,13 @@
 (defn are-neighbors [position-indices-1 position-indices-2]
   (if (= position-indices-1 position-indices-2)
     true
-    (let [zipped-truthiness (map (fn [[e1 e2]] (= e1 e2)) (map vector position-indices-1 position-indices-2))]
-      (and
-        (= 1 (count (remove true? zipped-truthiness)))
-        (let [index-of-false (.indexOf
-                               (->> (map vector position-indices-1 position-indices-2)
-                                    (map (fn [[a b]] (= a b))))
-                               false)]
-          (and
-            (not (= -1 index-of-false))
-            (= 1
-               (Math/abs
-                 (- (get position-indices-1 index-of-false)
-                    (get position-indices-2 index-of-false))))))))))
+    (let [zipped-truthiness (->> (map vector position-indices-1 position-indices-2)
+                                 (map (fn [[a b]] (= a b))))]
+      (and (= 1 (count (remove true? zipped-truthiness)))
+           (let [index-of-false (.indexOf zipped-truthiness false)]
+             (and (not (= -1 index-of-false))
+                  (= 1 (Math/abs (- (get position-indices-1 index-of-false)
+                                    (get position-indices-2 index-of-false))))))))))
 
 (s/fdef are-neighbors
         :args (s/cat :u (s/cat :indices-1 ::position-index :indices-2 ::position-index))
