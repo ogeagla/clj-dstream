@@ -1,7 +1,9 @@
 (ns clj-dstream.core
   (:gen-class)
   (:require [clojure.spec :as s]
-            [clojure.spec.test :as stest]))
+            [clojure.spec.test :as stest]
+            [loom.graph :as lgraph]
+            [loom.alg :as lalg]))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -188,6 +190,24 @@
              (and (not (= -1 index-of-false))
                   (= 1 (Math/abs (- (get position-indices-1 index-of-false)
                                     (get position-indices-2 index-of-false))))))))))
+
+(defn is-grid-group
+  "are all grids transitively neighbors?"
+  [position-indices]
+  (let [mapped-to-neighbors
+        (into {}
+              (map (fn [pos-idx]
+                     [pos-idx (filter
+                                (fn [ref-idx]
+                                  (and (are-neighbors pos-idx ref-idx)
+                                       (not (= pos-idx ref-idx))))
+                                position-indices)])
+                   position-indices))
+        g (lgraph/graph mapped-to-neighbors)]
+    (lalg/connected? g)))
+
+(s/fdef is-grid-group
+        :args (s/cat :u (s/cat :indices (s/coll-of ::position-index))))
 
 (s/fdef are-neighbors
         :args (s/cat :u (s/cat :indices-1 ::position-index :indices-2 ::position-index))

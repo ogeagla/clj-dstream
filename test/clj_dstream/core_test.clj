@@ -64,3 +64,20 @@
     (is (= true (core/are-neighbors pos1 pos2)))
     (is (= false (core/are-neighbors pos2 pos3)))
     (is (= false (core/are-neighbors pos3 pos4)))))
+
+(deftest is-grid-group
+  (let [candidate-1 [[0 1]
+                     [0 2]
+                     [0 3]
+                     [1 3]
+                     [1 4]
+                     [2 4]]
+        candidate-2 [[0 1]
+                     [0 2]
+                     [0 3]
+                     [1 3]
+                     [1 4]
+                     [3 4]
+                     [4 4]]]
+    (is (= true (core/is-grid-group candidate-1)))
+    (is (= false (core/is-grid-group candidate-2)))))
