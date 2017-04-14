@@ -62,6 +62,8 @@
         pos3 [1 2 3 3 4]
         pos4 [3 1 2 3 4]]
     (is (= true (core/are-neighbors pos1 pos2)))
+    (is (= true (core/are-neighbors pos1 pos2 0)))
+    (is (= false (core/are-neighbors pos1 pos2 1)))
     (is (= false (core/are-neighbors pos2 pos3)))
     (is (= false (core/are-neighbors pos3 pos4)))))
 
@@ -81,3 +83,12 @@
                      [4 4]]]
     (is (= true (core/is-grid-group candidate-1)))
     (is (= false (core/is-grid-group candidate-2)))))
+
+(deftest is-inside-or-outside-group
+  (let [candidate-1 [1 1]
+        candidate-2 [1 2]
+        group-1     [[1 1]
+                     [1 0]
+                     [0 1]]]
+    (is (= ::core/inside (core/grid-is-inside-or-outside-group candidate-1 group-1)))
+    (is (= ::core/outside (core/grid-is-inside-or-outside-group candidate-2 group-1)))))

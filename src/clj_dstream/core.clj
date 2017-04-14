@@ -17,6 +17,8 @@
 ;(s/def ::sporadic string?)
 ;(s/def ::normal string?)
 
+(s/def ::grid-topo #{::inside ::outside})
+
 (s/def ::cluster-label (s/or :string string? :nil nil?))
 
 (s/def ::label #{::dense ::sparse ::transitional})
@@ -43,6 +45,8 @@
 (s/def ::phase-space (s/coll-of ::domain))
 
 (s/def ::t int?)
+
+(s/def ::neighbor-dimension int?)
 
 (s/def ::last-update-time int?)
 (s/def ::last-time-removed-as-sporadic int?)
@@ -180,19 +184,24 @@
                        ::transitional)]
     (assoc char-vec ::label new-label)))
 
-(defn are-neighbors [position-indices-1 position-indices-2]
+(defn are-neighbors [position-indices-1 position-indices-2 & [neighbor-dimension]]
   (if (= position-indices-1 position-indices-2)
     true
     (let [zipped-truthiness (->> (map vector position-indices-1 position-indices-2)
                                  (map (fn [[a b]] (= a b))))]
       (and (= 1 (count (remove true? zipped-truthiness)))
            (let [index-of-false (.indexOf zipped-truthiness false)]
-             (and (not (= -1 index-of-false))
-                  (= 1 (Math/abs (- (get position-indices-1 index-of-false)
-                                    (get position-indices-2 index-of-false))))))))))
+             (and
+               (if neighbor-dimension
+                 (= neighbor-dimension index-of-false)
+                 true)
+               (not (= -1 index-of-false))
+               (= 1 (Math/abs (- (get position-indices-1 index-of-false)
+                                 (get position-indices-2 index-of-false))))))))))
 
 (defn is-grid-group
-  "are all grids transitively neighbors?"
+  "are all grids transitively neighbors?
+  ie, is the graph fully connected"
   [position-indices]
   (-> (into {}
             (map (fn [pos-idx]
@@ -205,11 +214,34 @@
       (lgraph/graph)
       (lalg/connected?)))
 
+(defn grid-is-inside-or-outside-group [grid group]
+  (let [truth-per-dim (map-indexed
+                        (fn [idx pos-at-idx]
+                          (let [group-minus-grid      (remove #(= grid %) group)
+                                neighbors-in-this-dim (map (fn [grid-from-group]
+                                                             (are-neighbors grid grid-from-group idx))
+                                                           group-minus-grid)]
+                            (some true? neighbors-in-this-dim)))
+                        grid)
+        is-inside     (every? true? truth-per-dim)]
+    (if is-inside
+      ::inside
+      ::outside)))
+
+(s/fdef grid-is-inside-or-outside-group
+        :args (s/cat :u (s/cat :grid ::position-index
+                               :group (s/coll-of ::position-index)))
+        :ret ::grid-topo)
+
 (s/fdef is-grid-group
-        :args (s/cat :u (s/cat :indices (s/coll-of ::position-index))))
+        :args (s/cat :u (s/cat :indices (s/coll-of ::position-index)))
+        :ret boolean?)
 
 (s/fdef are-neighbors
-        :args (s/cat :u (s/cat :indices-1 ::position-index :indices-2 ::position-index))
+        ;;TODO this doesnt work with optional args
+        :args (s/cat :u (s/cat :indices-1 ::position-index
+                               :indices-2 ::position-index
+                               :pos-dim (s/keys :opt [::neighbor-dimension])))
         :ret boolean?)
 
 (s/fdef one-dstream-iteration
@@ -242,10 +274,10 @@
 (stest/instrument `dstream-iterations)
 (stest/instrument `update-char-vec-label)
 (stest/instrument `phase-space->cell-count)
-(stest/instrument `are-neighbors)
+;;TODO make this spec work
+;(stest/instrument `are-neighbors)
 (stest/instrument `is-grid-group)
-
-;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))
+(stest/instrument `grid-is-inside-or-outside-group)
 
 (def test-state
   {::grid-cells           {[0 1 2 3] {::last-update-time              0
