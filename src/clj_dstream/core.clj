@@ -243,6 +243,7 @@
 (stest/instrument `update-char-vec-label)
 (stest/instrument `phase-space->cell-count)
 (stest/instrument `are-neighbors)
+(stest/instrument `is-grid-group)
 
 ;(clojure.pprint/pprint (one-dstream-iteration {::state test-state ::raw-data test-raw-data}))
 
