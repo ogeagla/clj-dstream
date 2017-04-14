@@ -194,17 +194,16 @@
 (defn is-grid-group
   "are all grids transitively neighbors?"
   [position-indices]
-  (let [mapped-to-neighbors
-        (into {}
-              (map (fn [pos-idx]
-                     [pos-idx (filter
-                                (fn [ref-idx]
-                                  (and (are-neighbors pos-idx ref-idx)
-                                       (not (= pos-idx ref-idx))))
-                                position-indices)])
-                   position-indices))
-        g (lgraph/graph mapped-to-neighbors)]
-    (lalg/connected? g)))
+  (-> (into {}
+            (map (fn [pos-idx]
+                   [pos-idx (filter
+                              (fn [ref-idx]
+                                (and (not (= pos-idx ref-idx))
+                                     (are-neighbors pos-idx ref-idx)))
+                              position-indices)])
+                 position-indices))
+      (lgraph/graph)
+      (lalg/connected?)))
 
 (s/fdef is-grid-group
         :args (s/cat :u (s/cat :indices (s/coll-of ::position-index))))
