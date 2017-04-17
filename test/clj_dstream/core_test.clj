@@ -92,3 +92,75 @@
                      [0 1]]]
     (is (= ::core/inside (core/grid-is-inside-or-outside-group candidate-1 group-1)))
     (is (= ::core/outside (core/grid-is-inside-or-outside-group candidate-2 group-1)))))
+
+(deftest is-grid-cluster
+  (let [candidate-1 {[0 0 0] {::core/last-update-time              0
+                              ::core/last-time-removed-as-sporadic 0
+                              ::core/grid-density-at-last-update   0.11
+                              ::core/sporadic-or-normal            ::core/normal
+                              ::core/cluster-label                 nil
+                              ::core/label                         ::core/dense}}
+        candidate-2 {[0 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/transitional}
+                     [1 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}
+                     [1 0] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}
+                     [1 2] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}
+                     [2 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/transitional}}
+
+        candidate-3 {[0 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/transitional}
+                     [1 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/sparse}
+                     [1 0] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}
+                     [1 2] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}
+                     [2 1] {::core/last-update-time              0
+                            ::core/last-time-removed-as-sporadic 0
+                            ::core/grid-density-at-last-update   0.11
+                            ::core/sporadic-or-normal            ::core/normal
+                            ::core/cluster-label                 nil
+                            ::core/label                         ::core/dense}}]
+    (is (= true (core/is-grid-cluster candidate-1)))
+    (is (= true (core/is-grid-cluster candidate-2)))
+    (is (= false (core/is-grid-cluster candidate-3)))))

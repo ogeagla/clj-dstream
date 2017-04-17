@@ -55,8 +55,6 @@
 
 (s/def ::char-vec (s/keys :req [::last-update-time ::last-time-removed-as-sporadic ::grid-density-at-last-update ::sporadic-or-normal ::cluster-label ::label]))
 
-(s/def ::grid-cell (s/keys :req [::position-value ::position-index ::char-vec]))
-
 (s/def ::grid-cells (s/map-of ::position-index ::char-vec))
 
 (s/def ::gap_time pos-int?)
@@ -203,16 +201,18 @@
   "are all grids transitively neighbors?
   ie, is the graph fully connected"
   [position-indices]
-  (-> (into {}
-            (map (fn [pos-idx]
-                   [pos-idx (filter
-                              (fn [ref-idx]
-                                (and (not (= pos-idx ref-idx))
-                                     (are-neighbors pos-idx ref-idx)))
-                              position-indices)])
-                 position-indices))
-      (lgraph/graph)
-      (lalg/connected?)))
+  (let [results (-> (into {}
+                          (map (fn [pos-idx]
+                                 [pos-idx (filter
+                                            (fn [ref-idx]
+                                              (and (not (= pos-idx ref-idx))
+                                                   (are-neighbors pos-idx ref-idx)))
+                                            position-indices)])
+                               position-indices))
+                    (lgraph/graph)
+                    (lalg/connected?))]
+    (println "is grid groupd: " results)
+    results))
 
 (defn grid-is-inside-or-outside-group [grid group]
   (let [truth-per-dim (map-indexed
@@ -224,9 +224,26 @@
                             (some true? neighbors-in-this-dim)))
                         grid)
         is-inside     (every? true? truth-per-dim)]
+    (println "is inside? " is-inside)
     (if is-inside
       ::inside
       ::outside)))
+
+(defn is-grid-cluster [grid-cells]
+  ;; is grid cluster
+  (and (is-grid-group (keys grid-cells))
+       ;;every inside grid is dense and others are dense or transitional
+       (every? true?
+               (map (fn [[pos-idx char-vec]]
+                      (case (grid-is-inside-or-outside-group pos-idx (keys grid-cells))
+                        ::inside (= ::dense (::label char-vec))
+                        ::outside (or (= ::dense (::label char-vec))
+                                      (= ::transitional (::label char-vec)))))
+                    grid-cells))))
+
+(s/fdef is-grid-cluster
+        :args (s/cat :u ::grid-cells)
+        :ret boolean?)
 
 (s/fdef grid-is-inside-or-outside-group
         :args (s/cat :u (s/cat :grid ::position-index
@@ -278,6 +295,7 @@
 ;(stest/instrument `are-neighbors)
 (stest/instrument `is-grid-group)
 (stest/instrument `grid-is-inside-or-outside-group)
+(stest/instrument `is-grid-cluster)
 
 (def test-state
   {::grid-cells           {[0 1 2 3] {::last-update-time              0
