@@ -206,7 +206,28 @@
                                                    ::core/gap_time    4}
                       ::core/initialized-clusters true}
         state-after  (core/initial-clustering state-before 1)]
-    (is (= 1 (count (filter #(= ::core/dense %) (map ::core/label (vals (::core/grid-cells state-after)))))))
-    (is (= 1 (count (filter #(= ::core/transitional %) (map ::core/label (vals (::core/grid-cells state-after)))))))
-    (is (= 1 (count (filter #(= ::core/sparse %) (map ::core/label (vals (::core/grid-cells state-after)))))))
-    (is (= 1 (count (remove nil? (map ::core/cluster-label (vals (::core/grid-cells state-after)))))))))
+    (is (= 1 (->> state-after
+                  ::core/grid-cells
+                  vals
+                  (map ::core/label)
+                  (filter #(= ::core/dense %))
+                  count)))
+    (is (= 1 (->> state-after
+                  ::core/grid-cells
+                  vals
+                  (map ::core/label)
+                  (filter #(= ::core/transitional %))
+                  count)))
+    (is (= 1 (->> state-after
+                  ::core/grid-cells
+                  vals
+                  (map ::core/label)
+                  (filter #(= ::core/sparse %))
+                  count)))
+    (is (= 1
+           (->> state-after
+                ::core/grid-cells
+                vals
+                (map ::core/cluster-label)
+                (remove nil?)
+                count)))))
