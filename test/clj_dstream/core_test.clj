@@ -164,3 +164,49 @@
     (is (= true (core/is-grid-cluster candidate-1)))
     (is (= true (core/is-grid-cluster candidate-2)))
     (is (= false (core/is-grid-cluster candidate-3)))))
+
+(deftest initialize-clustering
+  (let [state-before {::core/grid-cells           {[0 1 2 3] {::core/last-update-time              0
+                                                              ::core/last-time-removed-as-sporadic 0
+                                                              ::core/grid-density-at-last-update   0.11
+                                                              ::core/sporadic-or-normal            ::core/normal
+                                                              ::core/cluster-label                 nil
+                                                              ::core/label                         ::core/sparse}
+                                                   [0 1 2 4] {::core/last-update-time              0
+                                                              ::core/last-time-removed-as-sporadic 0
+                                                              ::core/grid-density-at-last-update   0.02
+                                                              ::core/sporadic-or-normal            ::core/normal
+                                                              ::core/cluster-label                 nil
+                                                              ::core/label                         ::core/sparse}
+                                                   [0 1 2 5] {::core/last-update-time              0
+                                                              ::core/last-time-removed-as-sporadic 0
+                                                              ::core/grid-density-at-last-update   0.55
+                                                              ::core/sporadic-or-normal            ::core/normal
+                                                              ::core/cluster-label                 nil
+                                                              ::core/label                         ::core/sparse}}
+                      ::core/properties           {::core/N           10000
+                                                   ::core/c_m         3.0
+                                                   ::core/c_l         0.8
+                                                   ::core/lambda      0.998
+                                                   ::core/beta        0.3
+                                                   ::core/dimensions  4
+                                                   ::core/phase-space [
+                                                                       {::core/domain-start    0.0
+                                                                        ::core/domain-end      1.0
+                                                                        ::core/domain-interval 0.1}
+                                                                       {::core/domain-start    0.0
+                                                                        ::core/domain-end      1.0
+                                                                        ::core/domain-interval 0.1}
+                                                                       {::core/domain-start    0.0
+                                                                        ::core/domain-end      1.0
+                                                                        ::core/domain-interval 0.1}
+                                                                       {::core/domain-start    0.0
+                                                                        ::core/domain-end      1.0
+                                                                        ::core/domain-interval 0.1}]
+                                                   ::core/gap_time    4}
+                      ::core/initialized-clusters true}
+        state-after  (core/initial-clustering state-before 1)]
+    (is (= 1 (count (filter #(= ::core/dense %) (map ::core/label (vals (::core/grid-cells state-after)))))))
+    (is (= 1 (count (filter #(= ::core/transitional %) (map ::core/label (vals (::core/grid-cells state-after)))))))
+    (is (= 1 (count (filter #(= ::core/sparse %) (map ::core/label (vals (::core/grid-cells state-after)))))))
+    (is (= 1 (count (remove nil? (map ::core/cluster-label (vals (::core/grid-cells state-after)))))))))

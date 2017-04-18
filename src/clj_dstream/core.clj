@@ -29,15 +29,9 @@
 
 (s/def ::dimensions pos-int?)
 
-(s/def ::position-value (s/and vector?
-                               ;#(= ::dimensions (count %))
-                               ;#(doseq [v %] (float? v))
-                               ))
+(s/def ::position-value (s/coll-of float? :kind vector?))
+(s/def ::position-index (s/coll-of int? :kind vector?))
 
-(s/def ::position-index (s/and vector?
-                               ;#(= ::dimensions (count %))
-                               ;#(doseq [v %] (int? v))
-                               ))
 (s/def ::domain-start float?)
 (s/def ::domain-end float?)
 (s/def ::domain-interval (s/and float? pos?))
@@ -104,19 +98,24 @@
                        value-index))))
     vec))
 
+(defn update-char-vec-density [char-vec t lambda with-data]
+  (assoc char-vec
+    ::grid-density-at-last-update
+    (+ (if with-data
+         1.0
+         0.0)
+       (*
+         (::grid-density-at-last-update char-vec)
+         (Math/pow lambda
+                   (- t
+                      (::last-update-time char-vec)))))))
+
 (defn put [{:keys [::raw-datum ::state ::t]}]
   (let [idx (position-value->position-index (merge raw-datum (::properties state)))]
     (if (contains? (::grid-cells state) idx)
       (let [char-vec  (get-in state [::grid-cells idx])
-            new-d     (+ 1.0
-                         (*
-                           (::grid-density-at-last-update char-vec)
-                           (Math/pow (get-in state [::properties ::lambda])
-                                     (- t
-                                        (::last-update-time char-vec)))))
-            new-cv    (assoc char-vec
-                        ::last-update-time t
-                        ::grid-density-at-last-update new-d)
+            new-cv    (assoc (update-char-vec-density char-vec t (get-in state [::properties ::lambda]) true)
+                        ::last-update-time t)
             new-state (assoc-in state [::grid-cells idx] new-cv)]
         {::state new-state})
       (let [new-state (assoc-in state
@@ -147,6 +146,7 @@
   (clojure.pprint/pprint state)
   (println "raw data: ")
   (clojure.pprint/pprint raw-data)
+
   (let [time*      (atom 0)
         the-state* (atom state)]
     (if-not (get-in state [::properties ::N])
@@ -154,9 +154,12 @@
         (reset! the-state* (assoc-in
                              @the-state*
                              [::state ::properties ::N]
-                             (phase-space->cell-count (get-in @the-state* [::state ::properties]))))))
+                             (phase-space->cell-count
+                               (get-in @the-state* [::state ::properties]))))))
     (doseq [raw-datum raw-data]
-      (reset! the-state* (one-dstream-iteration (merge @the-state* raw-datum {::t @time*})))
+      (reset! the-state*
+              (one-dstream-iteration
+                (merge @the-state* raw-datum {::t @time*})))
       (swap! time* inc))
     @the-state*))
 
@@ -211,7 +214,6 @@
                                position-indices))
                     (lgraph/graph)
                     (lalg/connected?))]
-    (println "is grid groupd: " results)
     results))
 
 (defn grid-is-inside-or-outside-group [grid group]
@@ -224,7 +226,6 @@
                             (some true? neighbors-in-this-dim)))
                         grid)
         is-inside     (every? true? truth-per-dim)]
-    (println "is inside? " is-inside)
     (if is-inside
       ::inside
       ::outside)))
@@ -234,12 +235,51 @@
   (and (is-grid-group (keys grid-cells))
        ;;every inside grid is dense and others are dense or transitional
        (every? true?
-               (map (fn [[pos-idx char-vec]]
-                      (case (grid-is-inside-or-outside-group pos-idx (keys grid-cells))
-                        ::inside (= ::dense (::label char-vec))
-                        ::outside (or (= ::dense (::label char-vec))
-                                      (= ::transitional (::label char-vec)))))
-                    grid-cells))))
+               (let [grid-keys (keys grid-cells)]
+                 (map (fn [[pos-idx char-vec]]
+                        (let [the-label (::label char-vec)]
+                          (case (grid-is-inside-or-outside-group pos-idx grid-keys)
+                            ::inside (= ::dense the-label)
+                            ::outside (or (= ::dense the-label)
+                                          (= ::transitional the-label)))))
+                      grid-cells)))))
+
+(defn initial-clustering [state t]
+
+  (let [lambda (get-in state [::properties ::lambda])
+        state* (atom state)]
+
+    (doseq [[pos-idx char-vec] (::grid-cells @state*)]
+      (reset! state* (assoc-in
+                       @state*
+                       [::grid-cells pos-idx]
+                       (update-char-vec-label
+                         {::char-vec   (update-char-vec-density char-vec t lambda false)
+                          ::properties (::properties state)}))))
+    (doseq [[pos-idx char-vec] (::grid-cells @state*)]
+      (if (= ::dense (::label char-vec))
+        (do
+          (println "creating cluster from dense: " char-vec)
+          (reset! state* (assoc-in
+                           @state*
+                           [::grid-cells pos-idx ::cluster-label]
+                           (str (java.util.UUID/randomUUID)))))
+        (println "not dense: " char-vec)))
+
+    @state*)
+  )
+
+
+(s/fdef initial-clustering
+        :args (s/cat :u ::state :v ::t)
+        :ret ::state)
+
+(s/fdef update-char-vec-density
+        :args (s/cat :u ::char-vec
+                     :v ::t
+                     :t ::lambda
+                     :w boolean?)
+        :ret ::char-vec)
 
 (s/fdef is-grid-cluster
         :args (s/cat :u ::grid-cells)
@@ -274,7 +314,9 @@
         :ret ::position-index)
 
 (s/fdef dstream-iterations
-        :args (s/cat :u (s/cat :state (s/keys :req [::state]) :raw-data (s/coll-of (s/keys :req [::raw-datum]))))
+        :args (s/cat :u (s/cat
+                          :state (s/keys :req [::state])
+                          :raw-data (s/coll-of (s/keys :req [::raw-datum]))))
         :ret (s/keys :req [::state]))
 
 (s/fdef update-char-vec-label
@@ -296,6 +338,8 @@
 (stest/instrument `is-grid-group)
 (stest/instrument `grid-is-inside-or-outside-group)
 (stest/instrument `is-grid-cluster)
+(stest/instrument `initial-clustering)
+(stest/instrument `update-char-vec-density)
 
 (def test-state
   {::grid-cells           {[0 1 2 3] {::last-update-time              0
@@ -303,7 +347,19 @@
                                       ::grid-density-at-last-update   0.11
                                       ::sporadic-or-normal            ::normal
                                       ::cluster-label                 nil
-                                      ::label                         ::dense}}
+                                      ::label                         ::sparse}
+                           [0 1 2 4] {::last-update-time              0
+                                      ::last-time-removed-as-sporadic 0
+                                      ::grid-density-at-last-update   0.02
+                                      ::sporadic-or-normal            ::normal
+                                      ::cluster-label                 nil
+                                      ::label                         ::sparse}
+                           [0 1 2 5] {::last-update-time              0
+                                      ::last-time-removed-as-sporadic 0
+                                      ::grid-density-at-last-update   0.55
+                                      ::sporadic-or-normal            ::normal
+                                      ::cluster-label                 nil
+                                      ::label                         ::sparse}}
    ::properties           {::N           10000
                            ::c_m         3.0
                            ::c_l         0.8
