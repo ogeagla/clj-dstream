@@ -3,7 +3,8 @@
   (:require [clojure.spec :as s]
             [clojure.spec.test :as stest]
             [loom.graph :as lgraph]
-            [loom.alg :as lalg]))
+            [loom.alg :as lalg]
+            [loom.graph :as g]))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -19,7 +20,7 @@
 
 (s/def ::grid-topo #{::inside ::outside})
 
-(s/def ::cluster-label (s/or :string string? :nil nil?))
+(s/def ::cluster (s/or :string string? :nil nil?))
 
 (s/def ::label #{::dense ::sparse ::transitional})
 
@@ -44,10 +45,15 @@
 
 (s/def ::last-update-time int?)
 (s/def ::last-time-removed-as-sporadic int?)
-(s/def ::grid-density-at-last-update float?)
-(s/def ::sporadic-or-normal #{::sporadic ::normal})
+(s/def ::density-at-last-update float?)
+(s/def ::sporadicity #{::sporadic ::normal})
 
-(s/def ::char-vec (s/keys :req [::last-update-time ::last-time-removed-as-sporadic ::grid-density-at-last-update ::sporadic-or-normal ::cluster-label ::label]))
+(s/def ::char-vec (s/keys :req [::last-update-time
+                                ::last-time-removed-as-sporadic
+                                ::density-at-last-update
+                                ::sporadicity
+                                ::cluster
+                                ::label]))
 
 (s/def ::grid-cells (s/map-of ::position-index ::char-vec))
 
@@ -100,12 +106,12 @@
 
 (defn update-char-vec-density [char-vec t lambda with-data]
   (assoc char-vec
-    ::grid-density-at-last-update
+    ::density-at-last-update
     (+ (if with-data
          1.0
          0.0)
        (*
-         (::grid-density-at-last-update char-vec)
+         (::density-at-last-update char-vec)
          (Math/pow lambda
                    (- t
                       (::last-update-time char-vec)))))))
@@ -122,9 +128,9 @@
                                 [::grid-cells idx]
                                 {::last-update-time              t
                                  ::last-time-removed-as-sporadic 0
-                                 ::grid-density-at-last-update   1.0
-                                 ::sporadic-or-normal            ::normal
-                                 ::cluster-label                 nil
+                                 ::density-at-last-update        1.0
+                                 ::sporadicity                   ::normal
+                                 ::cluster                       nil
                                  ::label                         ::sparse})]
         {::state new-state}))))
 
@@ -168,7 +174,7 @@
   (clojure.pprint/pprint char-vec)
 
   (let [{:keys [::N ::c_m ::c_l ::lambda]} properties
-        {:keys [::grid-density-at-last-update]} char-vec
+        {:keys [::density-at-last-update]} char-vec
         dense-coeff  (/ c_m
                         (*
                           N
@@ -178,8 +184,8 @@
                         (*
                           N
                           (- 1.0 lambda)))
-        new-label    (case [(>= grid-density-at-last-update dense-coeff)
-                            (<= grid-density-at-last-update sparse-coeff)]
+        new-label    (case [(>= density-at-last-update dense-coeff)
+                            (<= density-at-last-update sparse-coeff)]
                        [true false] ::dense
                        [false true] ::sparse
                        ::transitional)]
@@ -200,19 +206,23 @@
                (= 1 (Math/abs (- (get position-indices-1 index-of-false)
                                  (get position-indices-2 index-of-false))))))))))
 
+(defn pos-idxs->graph [position-indices]
+  ;;TODO spec this
+  (-> (into {}
+            (map (fn [pos-idx]
+                   [pos-idx (filter
+                              (fn [ref-idx]
+                                (and (not (= pos-idx ref-idx))
+                                     (are-neighbors pos-idx ref-idx)))
+                              position-indices)])
+                 position-indices))
+      (lgraph/graph)))
+
 (defn is-grid-group
   "are all grids transitively neighbors?
   ie, is the graph fully connected"
   [position-indices]
-  (let [results (-> (into {}
-                          (map (fn [pos-idx]
-                                 [pos-idx (filter
-                                            (fn [ref-idx]
-                                              (and (not (= pos-idx ref-idx))
-                                                   (are-neighbors pos-idx ref-idx)))
-                                            position-indices)])
-                               position-indices))
-                    (lgraph/graph)
+  (let [results (-> (pos-idxs->graph position-indices)
                     (lalg/connected?))]
     results))
 
@@ -244,6 +254,42 @@
                                           (= ::transitional the-label)))))
                       grid-cells)))))
 
+(defn grid-cell->grid-group [the-grid-cell all-grid-cells]
+  ;;TODO spec this
+  (let [g              (pos-idxs->graph (keys all-grid-cells))
+        conn-comps     (lalg/connected-components g)
+        conns-for-cell (first (filter (fn [adj-group]
+                                        (some #(= % (first (keys the-grid-cell))) adj-group))
+                                      conn-comps))]
+    (select-keys all-grid-cells conns-for-cell)))
+
+(defn grid-cell->neighbors [the-grid-cell all-grid-cells]
+  ;;TODO spec this
+  (let [ref-idx   (first (keys the-grid-cell))
+        g         (pos-idxs->graph (keys all-grid-cells))
+        neighbors (get (:adj g) ref-idx)]
+    (select-keys all-grid-cells neighbors)))
+
+(defn cluster->grid-cells [cluster state]
+  ;;TODO spec this
+  (if-not (= "NO_CLASS" cluster)
+    (->> state
+         ::grid-cells
+         (filter (fn [[pos-idx char-vec]]
+                   (= cluster (::cluster char-vec)))))))
+
+(defn cluster->size [cluster state]
+  ;;TODO spec this
+  (count
+    (cluster->grid-cells cluster state)))
+
+(defn relabel-cluster [old-cluster-label new-cluster-label state]
+  ;;TODO spec this
+  (let [grids             (cluster->grid-cells old-cluster-label state)
+        grids-w-new-label (into {}
+                                (map (fn [[pos-idx char-vec]] [pos-idx (assoc char-vec ::cluster new-cluster-label)]) grids))]
+    grids-w-new-label))
+
 (defn initial-clustering [state t]
 
   (let [lambda (get-in state [::properties ::lambda])
@@ -262,10 +308,85 @@
           (println "creating cluster from dense: " char-vec)
           (reset! state* (assoc-in
                            @state*
-                           [::grid-cells pos-idx ::cluster-label]
+                           [::grid-cells pos-idx ::cluster]
                            (str (java.util.UUID/randomUUID)))))
-        (println "not dense: " char-vec)))
+        (do (println "not dense, labeling no-class: " char-vec)
+            (reset! state* (assoc-in
+                             @state*
+                             [::grid-cells pos-idx ::cluster]
+                             "NO_CLASS")))))
+    (let [grid-cells       (::grid-cells @state*)
+          initial-clusters (->> @state*
+                                ::grid-cells
+                                vals
+                                (map ::cluster)
+                                (remove nil?)
+                                (remove #(= "NO_CLASS" %)))]
 
+      (println "initial clusters:" initial-clusters)
+      (let [one-pass-fn (fn [the-state]
+                          (let [the-state* (atom the-state)]
+                            (doseq [initial-cluster initial-clusters]
+                              (println " initial cluster: " initial-cluster)
+                              (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
+                                (println " grids in cluster: " grids-in-cluster)
+                                (doseq [grid-in-cluster grids-in-cluster]
+                                  (println "   grid in cluster: " grid-in-cluster)
+                                  (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster) grid-cells)
+                                        outside-grids  (filter
+                                                         (fn [[pos-idx char-vec]]
+                                                           (= ::outside
+                                                              (grid-is-inside-or-outside-group pos-idx (keys its-grid-group)))) its-grid-group)]
+                                    (doseq [outside-grid outside-grids]
+                                      (println "     outisde grid: " outside-grid)
+                                      (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid) grid-cells)]
+
+                                        (doseq [neighbor neighbors]
+                                          (println "          neighbor: " neighbor)
+                                          (let [neighbor-cluster      (::cluster (second neighbor))
+                                                neighbor-cluster-size (cluster->size neighbor-cluster @the-state*)
+                                                initial-cluster-size  (cluster->size initial-cluster @the-state*)
+                                                ]
+                                            (println "          this size vs initial: " neighbor-cluster-size " ; " initial-cluster-size)
+                                            ;;if neighbor belongs to a cluster
+                                            (if (< 0 neighbor-cluster-size)
+                                              (if (> initial-cluster-size neighbor-cluster-size)
+                                                (do
+                                                  (println "swapping 1")
+                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                                                   (relabel-cluster neighbor-cluster initial-cluster @the-state*))))
+                                                (do
+                                                  (println "swapping 2")
+                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                                                   (relabel-cluster initial-cluster neighbor-cluster @the-state*)))))
+                                              ;;elif neighbor does not have a cluster
+                                              (if (= ::transitional (::label (second neighbor)))
+                                                (do
+                                                  (println "swapping 3")
+                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                                                   {(first neighbor) (assoc (second neighbor) ::cluster initial-cluster)})))
+                                                )
+                                              )
+                                            )
+                                          ))
+                                      )
+                                    )
+                                  ))
+                              )
+                            @the-state*))
+            recur-fn    (fn [s]
+                          (let [s2 (one-pass-fn s)]
+                            (if (= s s2)
+                              (do
+                                (println "no state change, returning")
+                                s2)
+                              (do
+                                (println "state changed, recurring")
+                                (recur s2)))))
+
+            ]
+        (reset! state* (recur-fn @state*))
+        ))
     @state*)
   )
 
@@ -342,24 +463,44 @@
 (stest/instrument `update-char-vec-density)
 
 (def test-state
-  {::grid-cells           {[0 1 2 3] {::last-update-time              0
-                                      ::last-time-removed-as-sporadic 0
-                                      ::grid-density-at-last-update   0.11
-                                      ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil
-                                      ::label                         ::sparse}
-                           [0 1 2 4] {::last-update-time              0
-                                      ::last-time-removed-as-sporadic 0
-                                      ::grid-density-at-last-update   0.02
-                                      ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil
-                                      ::label                         ::sparse}
-                           [0 1 2 5] {::last-update-time              0
-                                      ::last-time-removed-as-sporadic 0
-                                      ::grid-density-at-last-update   0.55
-                                      ::sporadic-or-normal            ::normal
-                                      ::cluster-label                 nil
-                                      ::label                         ::sparse}}
+  {::grid-cells           {[10 1 2 2] {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.13
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+                           [10 1 2 3] {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.3
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+
+                           [0 1 2 3]  {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.11
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+                           [0 1 2 4]  {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.02
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+                           [0 1 2 5]  {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.55
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+                           [0 1 3 5]  {::last-update-time              0
+                                       ::last-time-removed-as-sporadic 0
+                                       ::density-at-last-update        0.66
+                                       ::sporadicity                   ::normal
+                                       ::cluster                       nil
+                                       ::label                         ::sparse}
+                           }
    ::properties           {::N           10000
                            ::c_m         3.0
                            ::c_l         0.8
