@@ -230,4 +230,5 @@
                 vals
                 (map ::core/cluster)
                 (remove #(= "NO_CLASS" %))
+                distinct
                 count)))))

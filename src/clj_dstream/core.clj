@@ -374,18 +374,19 @@
                                   ))
                               )
                             @the-state*))
-            recur-fn    (fn [s]
+            recur-fn    (fn [s c]
+                          (println "doing one pass" c)
                           (let [s2 (one-pass-fn s)]
                             (if (= s s2)
                               (do
-                                (println "no state change, returning")
+                                (println "no state change, returning after iters: " c)
                                 s2)
                               (do
                                 (println "state changed, recurring")
-                                (recur s2)))))
+                                (recur s2 (inc c))))))
 
             ]
-        (reset! state* (recur-fn @state*))
+        (reset! state* (recur-fn @state* 1))
         ))
     @state*)
   )
