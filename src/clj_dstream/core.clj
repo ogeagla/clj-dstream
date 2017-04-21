@@ -321,7 +321,7 @@
                              "NO_CLASS")))))
     @state*))
 
-(defn initial-clustering-single-pass [the-state]
+(defn- initial-clustering-single-pass [the-state]
   (let [the-clusters (->> the-state
                           ::grid-cells
                           vals
@@ -356,23 +356,23 @@
                                                                          {(first neighbor) (assoc (second neighbor) ::cluster initial-cluster)}))))))))))))
     @the-state*))
 
+(defn- init-clustering-iterations [state iter-count]
+  (my-log state ::init-clustering {:iteration iter-count})
+  (let [state-after (initial-clustering-single-pass state)]
+    (if (= state state-after)
+      (do
+        (my-log state-after ::init-clustering.complete {:iterations iter-count})
+        state-after)
+      (do
+        (my-log state-after ::init-clustering.recurring {:iterations iter-count})
+        (recur state-after (inc iter-count))))))
+
 (defn initial-clustering [state t]
   (let [init-state (->
                      state
                      (update-grid-cells t)
                      dense-grids->unique-clusters)]
-
-    (let [recur-fn (fn [s c]
-                     (my-log s ::init-clustering {:iteration c})
-                     (let [s2 (initial-clustering-single-pass init-state)]
-                       (if (= s s2)
-                         (do
-                           (my-log s2 ::init-clustering.complete {:iterations c})
-                           s2)
-                         (do
-                           (my-log s2 ::init-clustering.recurring {:iterations c})
-                           (recur s2 (inc c))))))]
-      (recur-fn init-state 1))))
+    (init-clustering-iterations init-state 1)))
 
 
 (s/fdef initial-clustering
