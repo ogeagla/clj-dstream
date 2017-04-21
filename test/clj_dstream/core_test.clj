@@ -12,8 +12,7 @@
           put-state     (core/put (merge test-state test-raw-data {::core/t      2
                                                                    ::core/lambda 0.3}))
           put-state-2   (core/put (merge put-state test-raw-data {::core/t      3
-                                                                  ::core/lambda 0.3}))]
-      (println "final state: " put-state-2))))
+                                                                  ::core/lambda 0.3}))])))
 
 (deftest dstream-iterations
   (testing "Dstream iterations"

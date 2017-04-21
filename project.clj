@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/test.check "0.9.0"]
-                 [aysylu/loom "1.0.0"]]
+                 [aysylu/loom "1.0.0"]
+                 [com.taoensso/timbre "4.10.0"]]
   :main ^:skip-aot clj-dstream.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
