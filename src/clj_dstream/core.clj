@@ -161,11 +161,10 @@
         the-state* (atom state)]
     (if-not (get-in state [::properties ::N])
       (do
-        (reset! the-state* (assoc-in
-                             @the-state*
-                             [::state ::properties ::N]
-                             (phase-space->cell-count
-                               (get-in @the-state* [::state ::properties]))))))
+        (swap! the-state* assoc-in
+               [::state ::properties ::N]
+               (phase-space->cell-count
+                 (get-in @the-state* [::state ::properties])))))
     (doseq [raw-datum raw-data]
       (reset! the-state*
               (one-dstream-iteration
@@ -176,15 +175,8 @@
 (defn update-char-vec-label [{:keys [::char-vec ::properties]}]
   (let [{:keys [::N ::c_m ::c_l ::lambda]} properties
         {:keys [::density-at-last-update]} char-vec
-        dense-coeff  (/ c_m
-                        (*
-                          N
-                          (- 1.0 lambda)))
-
-        sparse-coeff (/ c_l
-                        (*
-                          N
-                          (- 1.0 lambda)))
+        dense-coeff  (/ c_m (* N (- 1.0 lambda)))
+        sparse-coeff (/ c_l (* N (- 1.0 lambda)))
         new-label    (case [(>= density-at-last-update dense-coeff)
                             (<= density-at-last-update sparse-coeff)]
                        [true false] ::dense
@@ -296,12 +288,11 @@
   (let [lambda (get-in state [::properties ::lambda])
         state* (atom state)]
     (doseq [[pos-idx char-vec] (::grid-cells @state*)]
-      (reset! state* (assoc-in
-                       @state*
-                       [::grid-cells pos-idx]
-                       (update-char-vec-label
-                         {::char-vec   (update-char-vec-density char-vec t lambda false)
-                          ::properties (::properties state)}))))
+      (swap! state* assoc-in
+             [::grid-cells pos-idx]
+             (update-char-vec-label
+               {::char-vec   (update-char-vec-density char-vec t lambda false)
+                ::properties (::properties state)})))
     @state*))
 
 (defn dense-grids->unique-clusters [state]
@@ -310,15 +301,13 @@
       (if (= ::dense (::label char-vec))
         (do
           (my-log state ::dense-grid-creating-cluster {:char-vec char-vec})
-          (reset! state* (assoc-in
-                           @state*
-                           [::grid-cells pos-idx ::cluster]
-                           (str (java.util.UUID/randomUUID)))))
+          (swap! state* assoc-in
+                 [::grid-cells pos-idx ::cluster]
+                 (str (java.util.UUID/randomUUID))))
         (do (my-log state ::not-dense-grid {:char-vec char-vec})
-            (reset! state* (assoc-in
-                             @state*
-                             [::grid-cells pos-idx ::cluster]
-                             "NO_CLASS")))))
+            (swap! state* assoc-in
+                   [::grid-cells pos-idx ::cluster]
+                   "NO_CLASS"))))
     @state*))
 
 (defn- initial-clustering-single-pass [the-state]
