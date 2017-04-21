@@ -290,11 +290,10 @@
                                 (map (fn [[pos-idx char-vec]] [pos-idx (assoc char-vec ::cluster new-cluster-label)]) grids))]
     grids-w-new-label))
 
-(defn initial-clustering [state t]
-
+(defn update-grid-cells [state t]
+  ;;TODO spec this
   (let [lambda (get-in state [::properties ::lambda])
         state* (atom state)]
-
     (doseq [[pos-idx char-vec] (::grid-cells @state*)]
       (reset! state* (assoc-in
                        @state*
@@ -302,6 +301,10 @@
                        (update-char-vec-label
                          {::char-vec   (update-char-vec-density char-vec t lambda false)
                           ::properties (::properties state)}))))
+    @state*))
+
+(defn dense-grids->unique-clusters [state]
+  (let [state* (atom state)]
     (doseq [[pos-idx char-vec] (::grid-cells @state*)]
       (if (= ::dense (::label char-vec))
         (do
@@ -315,81 +318,78 @@
                              @state*
                              [::grid-cells pos-idx ::cluster]
                              "NO_CLASS")))))
-    (let [grid-cells       (::grid-cells @state*)
-          initial-clusters (->> @state*
-                                ::grid-cells
-                                vals
-                                (map ::cluster)
-                                (remove nil?)
-                                (remove #(= "NO_CLASS" %)))]
+    @state*))
 
-      (println "initial clusters:" initial-clusters)
-      (let [one-pass-fn (fn [the-state]
-                          (let [the-state* (atom the-state)]
-                            (doseq [initial-cluster initial-clusters]
-                              (println " initial cluster: " initial-cluster)
-                              (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
-                                (println " grids in cluster: " grids-in-cluster)
-                                (doseq [grid-in-cluster grids-in-cluster]
-                                  (println "   grid in cluster: " grid-in-cluster)
-                                  (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster) grid-cells)
-                                        outside-grids  (filter
-                                                         (fn [[pos-idx char-vec]]
-                                                           (= ::outside
-                                                              (grid-is-inside-or-outside-group pos-idx (keys its-grid-group)))) its-grid-group)]
-                                    (doseq [outside-grid outside-grids]
-                                      (println "     outisde grid: " outside-grid)
-                                      (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid) grid-cells)]
+(defn initial-clustering-single-pass [the-state]
+  (let [the-clusters (->> the-state
+                          ::grid-cells
+                          vals
+                          (map ::cluster)
+                          (remove nil?)
+                          (remove #(= "NO_CLASS" %)))
+        grid-cells   (::grid-cells the-state)
+        the-state*   (atom the-state)]
+    (doseq [initial-cluster the-clusters]
+      (println " initial cluster: " initial-cluster)
+      (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
+        (println " grids in cluster: " grids-in-cluster)
+        (doseq [grid-in-cluster grids-in-cluster]
+          (println "   grid in cluster: " grid-in-cluster)
+          (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster) grid-cells)
+                outside-grids  (filter
+                                 (fn [[pos-idx char-vec]]
+                                   (= ::outside
+                                      (grid-is-inside-or-outside-group pos-idx (keys its-grid-group)))) its-grid-group)]
+            (doseq [outside-grid outside-grids]
+              (println "     outisde grid: " outside-grid)
+              (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid) grid-cells)]
 
-                                        (doseq [neighbor neighbors]
-                                          (println "          neighbor: " neighbor)
-                                          (let [neighbor-cluster      (::cluster (second neighbor))
-                                                neighbor-cluster-size (cluster->size neighbor-cluster @the-state*)
-                                                initial-cluster-size  (cluster->size initial-cluster @the-state*)
-                                                ]
-                                            (println "          this size vs initial: " neighbor-cluster-size " ; " initial-cluster-size)
-                                            ;;if neighbor belongs to a cluster
-                                            (if (< 0 neighbor-cluster-size)
-                                              (if (> initial-cluster-size neighbor-cluster-size)
-                                                (do
-                                                  (println "swapping 1")
-                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
-                                                                                                   (relabel-cluster neighbor-cluster initial-cluster @the-state*))))
-                                                (do
-                                                  (println "swapping 2")
-                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
-                                                                                                   (relabel-cluster initial-cluster neighbor-cluster @the-state*)))))
-                                              ;;elif neighbor does not have a cluster
-                                              (if (= ::transitional (::label (second neighbor)))
-                                                (do
-                                                  (println "swapping 3")
-                                                  (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
-                                                                                                   {(first neighbor) (assoc (second neighbor) ::cluster initial-cluster)})))
-                                                )
-                                              )
-                                            )
-                                          ))
-                                      )
-                                    )
-                                  ))
-                              )
-                            @the-state*))
-            recur-fn    (fn [s c]
-                          (println "doing one pass" c)
-                          (let [s2 (one-pass-fn s)]
-                            (if (= s s2)
-                              (do
-                                (println "no state change, returning after iters: " c)
-                                s2)
-                              (do
-                                (println "state changed, recurring")
-                                (recur s2 (inc c))))))
+                (doseq [neighbor neighbors]
+                  (println "          neighbor: " neighbor)
+                  (let [neighbor-cluster      (::cluster (second neighbor))
+                        neighbor-cluster-size (cluster->size neighbor-cluster @the-state*)
+                        initial-cluster-size  (cluster->size initial-cluster @the-state*)
+                        ]
+                    (println "          this size vs initial: " neighbor-cluster-size " ; " initial-cluster-size)
+                    ;;if neighbor belongs to a cluster
+                    (if (< 0 neighbor-cluster-size)
+                      (if (> initial-cluster-size neighbor-cluster-size)
+                        (do
+                          (println "swapping 1")
+                          (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                           (relabel-cluster neighbor-cluster initial-cluster @the-state*))))
+                        (do
+                          (println "swapping 2")
+                          (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                           (relabel-cluster initial-cluster neighbor-cluster @the-state*)))))
+                      ;;elif neighbor does not have a cluster
+                      (if (= ::transitional (::label (second neighbor)))
+                        (do
+                          (println "swapping 3")
+                          (swap! the-state* assoc-in [::grid-cells] (merge (::grid-cells @the-state*)
+                                                                           {(first neighbor) (assoc (second neighbor) ::cluster initial-cluster)})))))))))))))
+    @the-state*)
 
-            ]
-        (reset! state* (recur-fn @state* 1))
-        ))
-    @state*)
   )
+
+(defn initial-clustering [state t]
+  (let [init-state (->
+                     state
+                     (update-grid-cells t)
+                     dense-grids->unique-clusters)]
+
+    (let [recur-fn (fn [s c]
+                     (println "doing one pass" c)
+                     (let [
+                           s2 (initial-clustering-single-pass init-state)]
+                       (if (= s s2)
+                         (do
+                           (println "no state change, returning after iters: " c)
+                           s2)
+                         (do
+                           (println "state changed, recurring")
+                           (recur s2 (inc c))))))]
+      (recur-fn init-state 1))))
 
 
 (s/fdef initial-clustering
