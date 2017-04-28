@@ -207,15 +207,20 @@
 
 (defn pos-idxs->graph [position-indices]
   ;;TODO spec this
-  (-> (into {}
-            (map (fn [pos-idx]
-                   [pos-idx (filter
-                              (fn [ref-idx]
-                                (and (not (= pos-idx ref-idx))
-                                     (are-neighbors pos-idx ref-idx)))
-                              position-indices)])
-                 position-indices))
-      (lgraph/graph)))
+  (->
+    (into
+      {}
+      (map
+        (fn [pos-idx]
+          [pos-idx
+           (filter
+             (fn [ref-idx]
+               (and
+                 (not (= pos-idx ref-idx))
+                 (are-neighbors pos-idx ref-idx)))
+             position-indices)])
+        position-indices))
+    (lgraph/graph)))
 
 (defn is-grid-group
   "are all grids transitively neighbors?
@@ -258,7 +263,10 @@
   (let [g              (pos-idxs->graph (keys all-grid-cells))
         conn-comps     (lalg/connected-components g)
         conns-for-cell (first (filter (fn [adj-group]
-                                        (some #(= % (first (keys the-grid-cell))) adj-group))
+                                        (some #(= %
+                                                  (first
+                                                    (keys the-grid-cell)))
+                                              adj-group))
                                       conn-comps))]
     (select-keys all-grid-cells conns-for-cell)))
 
@@ -290,15 +298,16 @@
                                      (select-keys grid-cells idxs))
                                    connecteds)
         w-new-clusters        (flatten
-                                (map (fn [the-conn-grid-cells]
-                                       (if (is-grid-group (keys the-conn-grid-cells))
-                                         (let [id (str (java.util.UUID/randomUUID))]
-                                           (into {}
-                                                 (map (fn [[pos-idx char-vec]]
-                                                        [pos-idx (assoc char-vec ::cluster id)]
-                                                        ) the-conn-grid-cells)))
-                                         (recur the-conn-grid-cells)))
-                                     connected-grids-cells))]
+                                (map
+                                  (fn [the-conn-grid-cells]
+                                    (if (is-grid-group (keys the-conn-grid-cells))
+                                      (let [id (str (java.util.UUID/randomUUID))]
+                                        (into {}
+                                              (map (fn [[pos-idx char-vec]]
+                                                     [pos-idx (assoc char-vec ::cluster id)])
+                                                   the-conn-grid-cells)))
+                                      (recur the-conn-grid-cells)))
+                                  connected-grids-cells))]
     w-new-clusters))
 
 (defn relabel-cluster [old-cluster-label new-cluster-label state]
@@ -306,7 +315,9 @@
   (let [grids             (cluster->grid-cells old-cluster-label state)
         grids-w-new-label (into {}
                                 (map (fn [[pos-idx char-vec]]
-                                       [pos-idx (assoc char-vec ::cluster new-cluster-label)]) grids))]
+                                       [pos-idx (assoc char-vec
+                                                  ::cluster new-cluster-label)])
+                                     grids))]
     grids-w-new-label))
 
 (defn update-grid-cells [state t]
@@ -348,14 +359,17 @@
     (doseq [initial-cluster the-clusters]
       (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
         (doseq [grid-in-cluster grids-in-cluster]
-          (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster) (::grid-cells @the-state*))
+          (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster)
+                                                      (::grid-cells @the-state*))
                 outside-grids  (filter
                                  (fn [[pos-idx char-vec]]
                                    (= ::outside
-                                      (grid-is-inside-or-outside-group pos-idx (keys its-grid-group))))
+                                      (grid-is-inside-or-outside-group pos-idx
+                                                                       (keys its-grid-group))))
                                  its-grid-group)]
             (doseq [outside-grid outside-grids]
-              (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid) (::grid-cells @the-state*))]
+              (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid)
+                                                    (::grid-cells @the-state*))]
                 (doseq [neighbor neighbors]
                   (let [neighbor-cluster      (::cluster (second neighbor))
                         neighbor-cluster-size (cluster->size neighbor-cluster @the-state*)
@@ -373,7 +387,8 @@
                       (when (= ::transitional (::label (second neighbor)))
                         (swap! the-state* assoc-in [::grid-cells]
                                (merge (::grid-cells @the-state*)
-                                      {(first neighbor) (assoc (second neighbor) ::cluster initial-cluster)}))))))))))))
+                                      {(first neighbor)
+                                       (assoc (second neighbor) ::cluster initial-cluster)}))))))))))))
     @the-state*))
 
 (defn- init-clustering-iterations [state iter-count]
@@ -395,6 +410,71 @@
                      dense-grids->unique-clusters)]
     (init-clustering-iterations init-state 1)))
 
+(defn- step-nine! [current-cluster updated-state* pos-idx biggest-neighbor char-vec]
+  (if (= "NO_CLASS" current-cluster)
+    ;;step 10
+    (swap! updated-state* assoc-in [::grid-cells pos-idx]
+           (do
+             (log-it pos-idx ::move-grid-to-biggest-neighboring-cluster
+                     biggest-neighbor)
+             (assoc char-vec ::cluster biggest-neighbor)))
+    (swap! updated-state* assoc-in [::grid-cells]
+           (merge (::grid-cells @updated-state*)
+                  (if (> (cluster->size current-cluster @updated-state*)
+                         (cluster->size biggest-neighbor @updated-state*))
+                    ;;step 11
+                    (do
+                      (log-it pos-idx ::move-biggest-neighboring-cluster-to-current-cluster
+                              {:from biggest-neighbor
+                               :to   current-cluster})
+                      (relabel-cluster biggest-neighbor current-cluster @updated-state*))
+                    ;;step 12
+                    (do
+                      (log-it pos-idx ::move-current-cluster-to-biggest-neighboring-cluster
+                              {:from current-cluster
+                               :to   biggest-neighbor})
+                      (relabel-cluster current-cluster biggest-neighbor @updated-state*)))))))
+
+(defn- step-four! [char-vec pos-idx updated-state*]
+  (when (= ::sparse (::label char-vec))
+    (do
+      (log-it pos-idx ::sparse-label char-vec)
+      (let [old-cluster (::cluster char-vec)]
+        (swap! updated-state* assoc-in [::grid-cells pos-idx]
+               (assoc char-vec ::cluster "NO_CLASS"))
+        (let [new-cluster (cluster->grid-cells old-cluster @updated-state*)]
+          ;;step 6
+          (when-not (is-grid-group new-cluster)
+            (do
+              (log-it pos-idx ::split-cluster new-cluster)
+              (split-cluster new-cluster))))))))
+
+(defn- step-fifteen! [current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor]
+  (if
+    (and
+      (= "NO_CLASS" current-cluster)
+      (= ::outside (grid-is-inside-or-outside-group
+                     (first grid-w-biggest-neighbor)
+                     (keys
+                       (merge
+                         (cluster->grid-cells biggest-neighbor @updated-state*)
+                         {pos-idx char-vec})))))
+    (if (and (not (= "NO_CLASS" current-cluster))
+             (> (cluster->size current-cluster @updated-state*)
+                (cluster->size biggest-neighbor @updated-state*)))
+
+
+      (swap! updated-state* assoc-in [::grid-cells (first grid-w-biggest-neighbor)]
+             (do
+               (log-it pos-idx ::move-neighoring-grid-to-current-cluster
+                       {:from biggest-neighbor
+                        :to   current-cluster})
+               (assoc (second grid-w-biggest-neighbor) ::cluster current-cluster)))
+
+      )
+
+    ))
+
 (defn adjust-clustering [state t]
   (let [updated-state* (atom (update-grid-cells state t))]
     (doseq [[pos-idx char-vec] (::grid-cells @updated-state*)]
@@ -402,77 +482,46 @@
       (when (= t (::last-time-label-changed char-vec))
         (do
           (log-it pos-idx ::label-changed-this-iteration char-vec)
-          ;;4
-          (when (= ::sparse (::label char-vec))
-            (do
-              (log-it pos-idx ::sparse-label char-vec)
-              (let [old-cluster (::cluster char-vec)]
-                (swap! updated-state* assoc-in [::grid-cells pos-idx]
-                       (assoc char-vec ::cluster "NO_CLASS"))
-                (let [new-cluster (cluster->grid-cells old-cluster @updated-state*)]
-                  ;;6
-                  (when-not (is-grid-group
-                              new-cluster)
-                    (do
-                      (log-it pos-idx ::split-cluster new-cluster)
-                      (split-cluster new-cluster)))))))
-          ;;7
+          ;;step 4
+          (step-four! char-vec pos-idx updated-state*)
+          ;;step 7
           (when (= ::dense (::label char-vec))
-            (do (log-it pos-idx ::dense-label char-vec)
-                (let [neighbors          (grid-cell->neighbors {pos-idx char-vec} (::grid-cells @updated-state*))
-                      neighbors-clusters (->>
-                                           (::grid-cells @updated-state*)
-                                           (grid-cell->neighbors {pos-idx char-vec})
-                                           vals
-                                           (map ::cluster)
-                                           (remove nil?)
-                                           not-empty)]
-                  (when neighbors-clusters
-                    (let [cluster-sizes                      (map (fn [cluster]
-                                                                    hash-map
-                                                                    :cluster cluster
-                                                                    :cluster-size (cluster->size cluster @updated-state*))
-                                                                  neighbors-clusters)
-                          biggest-neighboring-cluster        (->> cluster-sizes
-                                                                  (sort-by :cluster-size)
-                                                                  first
-                                                                  :cluster)
-                          grid-w-biggest-neighboring-cluster (first
-                                                               (keep
-                                                                 (fn [neigh-pos-id neigh-char-vec]
-                                                                   (= biggest-neighboring-cluster
-                                                                      (:cluster neigh-char-vec)))
-                                                                 neighbors))
-                          current-cluster                    (::cluster char-vec)]
-                      (case (::label grid-w-biggest-neighboring-cluster)
-                        ;;9
-                        ::dense (
-                                  ;;10
-                                  (if (= "NO_CLASS" current-cluster)
-                                    (swap! updated-state* assoc-in [::grid-cells pos-idx]
-                                           (do
-                                             (log-it pos-idx ::move-grid-to-biggest-neighboring-cluster biggest-neighboring-cluster)
-                                             (assoc char-vec ::cluster biggest-neighboring-cluster)))
-                                    (swap! updated-state* assoc-in [::grid-cells]
-                                           (merge (::grid-cells @updated-state*)
-                                                  (if (> (cluster->size current-cluster @updated-state*)
-                                                         (cluster->size biggest-neighboring-cluster @updated-state*))
-                                                    ;;11
-                                                    (do
-                                                      (log-it pos-idx ::move-biggest-neighboring-cluster-to-current-cluster {:from biggest-neighboring-cluster
-                                                                                                                             :to   current-cluster})
-                                                      (relabel-cluster biggest-neighboring-cluster current-cluster @updated-state*))
-                                                    ;;12
-                                                    (do
-                                                      (log-it pos-idx ::move-current-cluster-to-biggest-neighboring-cluster {:from current-cluster
-                                                                                                                             :to   biggest-neighboring-cluster})
-                                                      (relabel-cluster current-cluster biggest-neighboring-cluster @updated-state*)))))))
-
-                        ;;15
-                        ::transitional ()
-                        )
-
-                      ))))))))))
+            (do
+              (log-it pos-idx ::dense-label char-vec)
+              (let [neighbors          (grid-cell->neighbors {pos-idx char-vec} (::grid-cells @updated-state*))
+                    neighbors-clusters (->>
+                                         (::grid-cells @updated-state*)
+                                         (grid-cell->neighbors {pos-idx char-vec})
+                                         vals
+                                         (map ::cluster)
+                                         (remove nil?)
+                                         not-empty)]
+                (when neighbors-clusters
+                  (let [biggest-neighbor        (->>
+                                                  neighbors-clusters
+                                                  (map (fn [cluster]
+                                                         hash-map
+                                                         :cluster cluster
+                                                         :cluster-size (cluster->size
+                                                                         cluster
+                                                                         @updated-state*)))
+                                                  (sort-by :cluster-size)
+                                                  first
+                                                  :cluster)
+                        grid-w-biggest-neighbor (first
+                                                  (keep
+                                                    (fn [neigh-pos-id neigh-char-vec]
+                                                      (= biggest-neighbor
+                                                         (:cluster neigh-char-vec)))
+                                                    neighbors))
+                        current-cluster         (::cluster char-vec)]
+                    (case (::label (second grid-w-biggest-neighbor))
+                      ;;step 9
+                      ::dense
+                      (step-nine! current-cluster updated-state* pos-idx biggest-neighbor char-vec)
+                      ;;step 15
+                      ::transitional
+                      (step-fifteen! current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor))))))))))))
 
 (s/fdef initial-clustering
         :args (s/cat :u ::state :v ::t)
