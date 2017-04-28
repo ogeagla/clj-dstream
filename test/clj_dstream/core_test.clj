@@ -294,43 +294,58 @@
     (is (= 2 (test-utils/cluster-count state-after-2)))))
 
 (deftest split-cluster
-  (let [cluster-1 {[0 1 2 3] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.11
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}
-                   [0 1 2 4] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.02
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}
-                   [0 1 2 5] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.55
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}
+  (let [cluster-1 {[0 1 2 3]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.11
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
+                   [0 1 2 4]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.02
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
+                   [0 1 2 5]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.55
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
 
-                   [0 1 4 5] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.55
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}
-                   [0 1 5 5] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.55
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}
+                   [0 1 4 5]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.55
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
+                   [0 1 5 5]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.55
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
 
-                   [0 1 6 5] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
-                              ::core/density-at-last-update        0.55
-                              ::core/sporadicity                   ::core/normal
-                              ::core/cluster                       "A"
-                              ::core/label                         ::core/sparse}}
+                   [0 1 6 5]  {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.55
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}
+                   [10 2 6 5] {::core/last-update-time              0
+                               ::core/last-time-removed-as-sporadic 0
+                               ::core/density-at-last-update        0.55
+                               ::core/sporadicity                   ::core/normal
+                               ::core/cluster                       "A"
+                               ::core/label                         ::core/sparse}}
         split-1   (core/split-cluster cluster-1)]
-    (= 2 (count split-1))))
+    (is (= 3 (count split-1)))
+    (is (= (set (keys cluster-1))
+           (set (mapcat identity (map keys split-1)))))))
+
+(deftest adjust-clustering
+  (let [state-1 core/test-state
+        t-1 1
+        adj-1 (core/adjust-clustering state-1 t-1)]
+    (clojure.pprint/pprint adj-1)
+    ))
