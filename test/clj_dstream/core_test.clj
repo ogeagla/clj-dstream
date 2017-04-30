@@ -11,13 +11,13 @@
 
           put-state     (core/put (merge test-state test-raw-data {::core/t      2
                                                                    ::core/lambda 0.3}))
-          put-state-2   (core/put (merge put-state test-raw-data {::core/t      3
+          put-state-2   (core/put (merge {::core/state put-state} test-raw-data {::core/t      3
                                                                   ::core/lambda 0.3}))])))
 
 (deftest dstream-iterations
   (testing "Dstream iterations"
     (let [test-state    {::core/state core/test-state}
-          test-raw-data (repeat 10 {::core/raw-datum core/test-raw-data})
+          test-raw-data (repeat 1000 {::core/raw-datum core/test-raw-data})
           final-state   (core/dstream-iterations test-state test-raw-data)])))
 
 (deftest computes-cell-count-from-phase-space
@@ -91,8 +91,8 @@
         group-1     [[1 1]
                      [1 0]
                      [0 1]]]
-    (is (= ::core/inside (core/grid-is-inside-or-outside-group candidate-1 group-1)))
-    (is (= ::core/outside (core/grid-is-inside-or-outside-group candidate-2 group-1)))))
+    (is (= ::core/inside (core/pos-is-inside-or-outside-group candidate-1 group-1)))
+    (is (= ::core/outside (core/pos-is-inside-or-outside-group candidate-2 group-1)))))
 
 (deftest is-grid-cluster
   (let [candidate-1 {[0 0 0] {::core/last-update-time              0
@@ -217,7 +217,7 @@
                                                                          {::core/domain-start    0.0
                                                                           ::core/domain-end      1.0
                                                                           ::core/domain-interval 0.1}]
-                                                     ::core/gap_time    4}
+                                                     ::core/gap-time    4}
                         ::core/initialized-clusters true}
         state-before-2 {::core/grid-cells           {[0 1 2 3] {::core/last-update-time              0
                                                                 ::core/last-time-removed-as-sporadic 0
@@ -283,7 +283,7 @@
                                                                          {::core/domain-start    0.0
                                                                           ::core/domain-end      1.0
                                                                           ::core/domain-interval 0.1}]
-                                                     ::core/gap_time    4}
+                                                     ::core/gap-time    4}
                         ::core/initialized-clusters true}
         state-after-1  (core/initial-clustering state-before-1 1)
         state-after-2  (core/initial-clustering state-before-2 1)]
