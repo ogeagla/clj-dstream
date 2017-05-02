@@ -6,7 +6,10 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/test.check "0.9.0"]
                  [aysylu/loom "1.0.0"]
-                 [com.taoensso/timbre "4.10.0"]]
+                 [com.taoensso/timbre "4.10.0"]
+                 [thi.ng/geom "0.0.908"]
+                 [thinktopic/think.tsne "0.1.1"]
+                 [net.mikera/core.matrix "0.58.0"]]
   :main ^:skip-aot clj-dstream.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
