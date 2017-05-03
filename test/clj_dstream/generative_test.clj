@@ -11,7 +11,8 @@
             [thi.ng.color.gradients :as grad]
             [think.tsne.core :as tsne]
             [clojure.core.matrix :as matrix]
-            [clojure.core.matrix.random :as random]))
+            [clojure.core.matrix.random :as random]
+            [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
 
 (defn get-random-sample [properties & {:keys [centroids]
@@ -179,7 +180,7 @@
 
 
 (deftest stuff
-  (let [samples     (repeatedly 300 #(hash-map
+  (let [samples     (repeatedly 2000 #(hash-map
                                        ::core/raw-datum
                                        {::core/position-value
                                                      (get-random-sample {
@@ -231,15 +232,17 @@
                                    ::core/initialized-clusters false}}
 
 
-        final-state (core/dstream-iterations test-state samples)
+        [final-state prof-stats] (profiled {} (core/dstream-iterations test-state samples))
 
         final-grids (::core/grid-cells final-state)
 
+        sorted-stats (sort-by #(:mean (second %)) (:id-stats-map prof-stats))
         ]
 
     ;;TODO abandon tsne for a simple dxd grid of 2d scatter plots
 
-    (clojure.pprint/pprint final-grids)
-    (display-state (::core/grid-cells final-state))
+    (clojure.pprint/pprint sorted-stats)
+    ;(clojure.pprint/pprint final-grids)
+    ;(display-state (::core/grid-cells final-state))
     )
   )
