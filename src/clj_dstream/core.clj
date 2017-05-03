@@ -174,8 +174,8 @@
   (p ::are-neighbors
      (if (= position-indices-1 position-indices-2)
        true
-       (let [zipped-truthiness (->> (map vector position-indices-1 position-indices-2)
-                                    (map (fn [[a b]] (= a b))))]
+       (let [zipped-truthiness (->> (pmap vector position-indices-1 position-indices-2)
+                                    (pmap (fn [[a b]] (= a b))))]
          (and (= 1 (count (remove true? zipped-truthiness)))
               (let [index-of-false (.indexOf zipped-truthiness false)]
                 (and
@@ -195,7 +195,7 @@
      (->
        (into
          {}
-         (map
+         (pmap
            (fn [pos-idx]
              [pos-idx
               (filter
@@ -223,7 +223,7 @@
      (let [group-minus-grid (remove #(= grid-pos %) group-poss)
            truth-per-dim    (map-indexed
                               (fn [idx pos-at-idx]
-                                (let [neighbors-in-this-dim (map (fn [grid-from-group]
+                                (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
                                                                    (are-neighbors grid-pos grid-from-group idx))
                                                                  group-minus-grid)]
                                   (some true? neighbors-in-this-dim)))
@@ -240,7 +240,7 @@
           ;;every inside grid is dense and others are dense or transitional
           (every? true?
                   (let [grid-keys (keys grid-cells)]
-                    (map (fn [[pos-idx char-vec]]
+                    (pmap (fn [[pos-idx char-vec]]
                            (let [the-label (::label char-vec)]
                              (case (pos-is-inside-or-outside-group pos-idx grid-keys)
                                ::inside (= ::dense the-label)
@@ -492,7 +492,7 @@
                    (when neighbors-clusters
                      (let [biggest-neighbor        (->>
                                                      neighbors-clusters
-                                                     (map (fn [cluster]
+                                                     (pmap (fn [cluster]
                                                             hash-map
                                                             :cluster cluster
                                                             :cluster-size (cluster->size
@@ -529,7 +529,7 @@
                                           (remove nil?)
                                           not-empty)]
                  (when neighbors-clusters
-                   (let [n-clusters-w-grid-added (map (fn [neighbors-cluster]
+                   (let [n-clusters-w-grid-added (pmap (fn [neighbors-cluster]
                                                         (let [neighbors-cluster-w-grid (merge (cluster->grid-cells neighbors-cluster @updated-state*)
                                                                                               {pos-idx char-vec})
                                                               is-outside               (= ::outside (pos-is-inside-or-outside-group pos-idx (map first neighbors-cluster-w-grid)))
@@ -585,8 +585,10 @@
                (phase-space->cell-count
                  (get-in @the-state* [::properties])))))
     (doseq [{:keys [::raw-datum]} raw-data]
-      (if (= 0 (mod @time* 5))
-        (log-it raw-datum ::put-datum [{:t @time*} raw-datum]))
+      (if (= 0 (mod @time* (int (/ (count raw-data) 100))))
+        (log-it raw-datum ::put-datum [{:t @time*} {:cluster-count (count (distinct (map ::cluster (map second (::grid-cells @the-state*)))))
+                                                    :grid-count (count (::grid-cells @the-state*))
+                                                    :N (::N (::properties @the-state*))}]))
       (let [the-data {::state @the-state* ::raw-datum raw-datum ::t @time*}]
         (reset! the-state*
                 (p ::one-dstream-iteration
@@ -652,19 +654,19 @@
         :args (s/cat :u (s/keys :req [::phase-space]))
         :ret int?)
 
-(stest/instrument `one-dstream-iteration)
-(stest/instrument `position-value->position-index)
-(stest/instrument `put)
-(stest/instrument `dstream-iterations)
-(stest/instrument `update-char-vec-label)
-(stest/instrument `phase-space->cell-count)
-;;TODO make this spec work
-;(stest/instrument `are-neighbors)
-(stest/instrument `is-grid-group)
-(stest/instrument `pos-is-inside-or-outside-group)
-(stest/instrument `is-grid-cluster)
-(stest/instrument `initial-clustering)
-(stest/instrument `update-char-vec-density)
+;(stest/instrument `one-dstream-iteration)
+;(stest/instrument `position-value->position-index)
+;(stest/instrument `put)
+;(stest/instrument `dstream-iterations)
+;(stest/instrument `update-char-vec-label)
+;(stest/instrument `phase-space->cell-count)
+;;;TODO make this spec work
+;;(stest/instrument `are-neighbors)
+;(stest/instrument `is-grid-group)
+;(stest/instrument `pos-is-inside-or-outside-group)
+;(stest/instrument `is-grid-cluster)
+;(stest/instrument `initial-clustering)
+;(stest/instrument `update-char-vec-density)
 
 (def test-state
   {::grid-cells           {[10 1 2 2] {::last-update-time              0
