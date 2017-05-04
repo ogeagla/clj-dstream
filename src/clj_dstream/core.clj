@@ -11,6 +11,7 @@
 
 ;;TODO dynamically compute gap time
 ;;TODO get clusters from state for user
+;;TODO test with crater dataset https://blog.dominodatalab.com/topology-and-density-based-clustering/
 
 (defn log-it [context summary data]
   (info (hash context) summary data))
@@ -396,6 +397,19 @@
       (do
         (log-it state-after ::init-clustering.recurring {:iterations iter-count})
         (recur state-after (inc iter-count))))))
+
+(defn state->clusters [state]
+  "For use as external API? What would a user want when they ask for the clusters?"
+  (let [w-grid-cells (into {}
+                           (->>
+                             (::grid-cells state)
+                             (map #(::cluster (second %)))
+                             (remove #(or (nil? %)
+                                          (= "NO_CLASS" %)))
+                             (map (fn [cluster]
+                                    [cluster (cluster->grid-cells cluster state)]))))]
+    {:clusters-grid-cells w-grid-cells
+     :properties          (::properties state)}))
 
 (defn initial-clustering [state t]
   ;;TODO spec

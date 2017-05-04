@@ -10,7 +10,7 @@
 ;; w plotting
 ;; w persistent state IO
 
-(defn run-with-profiling []
+#_(defn run-with-profiling []
   (let [[{:keys [final-state state-ts]} prof-stats] (profiled {} (core/dstream-iterations test-state samples :state-append-every (int (/ time-intervals 20))))])
   )
 
