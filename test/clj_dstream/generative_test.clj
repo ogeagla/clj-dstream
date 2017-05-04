@@ -15,10 +15,14 @@
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
 
-(defn get-random-sample [method properties & {:keys [centroids]}]
+(defn get-random-sample [method properties & {:keys [centroids pos]}]
   ;;TODO make this sample some actua; distributions....
   (if centroids
-    (let [the-centroid (get centroids (rand-int (count centroids)))]
+    (let [the-centroid (get centroids (rand-int (count centroids)))
+          {:keys [row col]} pos
+
+          ]
+      (n/noise2 (* row 0.1) (* col 0.25))
       (vec
         (map-indexed (fn [idx {:keys [::core/domain-start ::core/domain-end]}]
                        (max domain-start (min domain-end (+ domain-start
@@ -55,19 +59,21 @@
 
     (let [vecs
           (for [c (range cols) r (range rows)]
-                 (let [num (or (::core/density-at-last-update (get grid-cells [r c]))
-                               0.0)]
-                   num
-                   ))]
-      (->>
-        vecs
-        (viz/matrix-2d rows cols)
-        ))
-
+            (let [num (or (::core/density-at-last-update (get grid-cells [r c]))
+                          0.0)]
+              num
+              ))]
+      {:matrix (->>
+                 vecs
+                 (viz/matrix-2d rows cols)
+                 )
+       :rows   rows
+       :cols   cols})
     ))
 
 (defn heatmap-spec
   [id the-matrix]
+  (println "id, matrix: " id the-matrix)
   {:matrix        the-matrix
    :value-domain  (viz/value-domain-bounds the-matrix)
    :palette       (->> id (grad/cosine-schemes) (apply grad/cosine-gradient 100))
@@ -75,18 +81,18 @@
    :layout        viz/svg-heatmap})
 
 (defn cartesian-viz
-  [prefix id the-matrix & [opts]]
+  [prefix id the-matrix rows cols & [opts]]
   (clojure.pprint/pprint the-matrix)
   (->> {:x-axis (viz/linear-axis
-                  {:domain [0 50]
+                  {:domain [0 cols]
                    :range  [50 550]
                    :major  10
                    :minor  5
                    :pos    280})
         :y-axis (viz/linear-axis
-                  {:domain      [0 10]
+                  {:domain      [0 rows]
                    :range       [280 20]
-                   :major       1
+                   :major       10
                    :pos         50
                    :label-dist  15
                    :label-style {:text-anchor "end"}})
@@ -112,9 +118,11 @@
               _            (println "tsne: " algo-name)
               output-map   {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
           output-map)))
+  (let [hm1 (grids-2d->heatmap-vec grid-cells props)
+        hm2 (grids-2d->heatmap-vec grid-cells props)]
 
-  (cartesian-viz "hm" :rainbow2 (grids-2d->heatmap-vec grid-cells props))
-  (cartesian-viz "hm" :orange-blue (grids-2d->heatmap-vec grid-cells props))
+    (cartesian-viz "hm" :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
+    (cartesian-viz "hm" :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
   )
 
 
@@ -132,18 +140,30 @@
                                           {::core/domain-start    -2.5
                                            ::core/domain-end      2.5
                                            ::core/domain-interval 0.1}
-                                          {::core/domain-start    -0.5
-                                           ::core/domain-end      0.5
+                                          {::core/domain-start    -2.5
+                                           ::core/domain-end      2.5
                                            ::core/domain-interval 0.1}]
-                      ::core/gap-time    50}
-        centroids    (vec (repeatedly 3 (fn [] (get-random-sample :unifrom test-props))))
-        _            (println "centroids: " centroids)
-        samples      (repeatedly 10000 #(hash-map
+                      ::core/gap-time    250}
+        ;centroids    (vec (repeatedly 4 (fn [] (get-random-sample :unifrom test-props))))
+        ;_            (println "centroids: " centroids)
+        samples      (repeatedly 50000 #(hash-map
                                          ::core/raw-datum
                                          {::core/position-value
-                                                       (get-random-sample :normal test-props
-                                                                          :centroids
-                                                                          centroids)
+                                                       (vec
+                                                         (take
+                                                           (::core/dimensions test-props)
+                                                           (repeatedly
+                                                             (fn []
+
+                                                               (if (> 0.5 (rand))
+                                                                 (+ 0.1
+                                                                    (* 0.15
+                                                                       (first
+                                                                         (random/sample-normal 1))))
+                                                                 (+ 0.9
+                                                                    (* 0.25
+                                                                       (first
+                                                                         (random/sample-normal 1)))))))))
                                           ::core/value 1.0}))
 
         test-state   {::core/state {::core/grid-cells           {}
