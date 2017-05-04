@@ -9,20 +9,8 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
-
 (defn log-it [context summary data]
   (info (hash context) summary data))
-
-;;;TODO thought i needed to spec these "enums" for spec, but doesnt make it work
-;(s/def ::dense string?)
-;(s/def ::sparse string?)
-;(s/def ::transitional string?)
-;(s/def ::sporadic string?)
-;(s/def ::normal string?)
 
 (s/def ::grid-topo #{::inside ::outside})
 
@@ -680,70 +668,7 @@
 ;(stest/instrument `initial-clustering)
 ;(stest/instrument `update-char-vec-density)
 
-(def test-state
-  {::grid-cells           {[10 1 2 2] {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.13
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}
-                           [10 1 2 3] {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.3
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}
-                           [0 1 2 3]  {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.11
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}
-                           [0 1 2 4]  {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.02
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}
-                           [0 1 2 5]  {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.55
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}
-                           [0 1 3 5]  {::last-update-time              0
-                                       ::last-time-removed-as-sporadic 0
-                                       ::density-at-last-update        0.66
-                                       ::sporadicity                   ::normal
-                                       ::cluster                       nil
-                                       ::label                         ::sparse
-                                       ::last-time-label-changed       0}}
-   ::properties           {::N           10000
-                           ::c_m         3.0
-                           ::c_l         0.8
-                           ::lambda      0.998
-                           ::beta        0.3
-                           ::dimensions  4
-                           ::phase-space [
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}
-                                          {::domain-start    0.0
-                                           ::domain-end      1.0
-                                           ::domain-interval 0.1}]
-                           ::gap-time    4}
-   ::initialized-clusters true})
+
 
 (def test-raw-data
   {::value          0.1

@@ -49,7 +49,6 @@
 
 (defn cartesian-viz
   [prefix id the-matrix rows cols & [opts]]
-  (clojure.pprint/pprint the-matrix)
   (->> {:x-axis (viz/linear-axis
                   {:domain [0 cols]
                    :range  [50 550]
@@ -125,7 +124,7 @@
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
                         ::core/gap-time    500}
-        time-intervals 10000
+        time-intervals 20000
         samples        (map (fn [t]
                               (sample-at-time t time-intervals test-props)
                               ) (range time-intervals))
@@ -144,7 +143,6 @@
                           (display-state t test-props (::core/grid-cells staat))) state-ts))
     ;;TODO abandon tsne for a simple dxd grid of 2d scatter plots
 
-    (clojure.pprint/pprint displayable)
-    (clojure.pprint/pprint sorted-stats)
+    ;(clojure.pprint/pprint sorted-stats)
     (println "state-ts size: " (count state-ts)))
   )
