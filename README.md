@@ -2,12 +2,9 @@
 
 ## What Is It
 
-
-Data stream with three clusters, one at a time: 
 ![3 Cluster GIF][clustergif]
 
 [clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/3-clusters-1-at-a-time/animated-loop.gif "3 Clusters One At A Time"
-
 
 ## License
 
