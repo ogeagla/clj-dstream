@@ -98,20 +98,20 @@
     (map-indexed (fn [idx position-val]
                    (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)]
                      (when-not (or (> position-val domain-end)
-                             (< position-val domain-start))
+                                   (< position-val domain-start))
                        (do
                          ;;TODO what do here?
                          ;; do throw exception,
                          ;; conform data into range (creating hotspots on edge?),
                          ;; or just ignore the datum?
-                           (max domain-start (min domain-end position-val)))
+                         (max domain-start (min domain-end position-val)))
                        #_(throw
-                         (ex-info
-                           "Raw data value outside range" {:keys idx
-                                                           :data {:value  position-val
-                                                                  :domain {::domain-interval domain-interval
-                                                                           ::domain-start    domain-start
-                                                                           ::domain-end      domain-end}}})))
+                           (ex-info
+                             "Raw data value outside range" {:keys idx
+                                                             :data {:value  position-val
+                                                                    :domain {::domain-interval domain-interval
+                                                                             ::domain-start    domain-start
+                                                                             ::domain-end      domain-end}}})))
                      (let [dist        (- position-val domain-start)
                            value-index (int (/ dist domain-interval))]
                        value-index))))
@@ -230,8 +230,8 @@
            truth-per-dim    (map-indexed
                               (fn [idx pos-at-idx]
                                 (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
-                                                                   (are-neighbors grid-pos grid-from-group idx))
-                                                                 group-minus-grid)]
+                                                                    (are-neighbors grid-pos grid-from-group idx))
+                                                                  group-minus-grid)]
                                   (some true? neighbors-in-this-dim)))
                               grid-pos)
            is-inside        (every? true? truth-per-dim)]
@@ -247,12 +247,12 @@
           (every? true?
                   (let [grid-keys (keys grid-cells)]
                     (pmap (fn [[pos-idx char-vec]]
-                           (let [the-label (::label char-vec)]
-                             (case (pos-is-inside-or-outside-group pos-idx grid-keys)
-                               ::inside (= ::dense the-label)
-                               ::outside (or (= ::dense the-label)
-                                             (= ::transitional the-label)))))
-                         grid-cells))))))
+                            (let [the-label (::label char-vec)]
+                              (case (pos-is-inside-or-outside-group pos-idx grid-keys)
+                                ::inside (= ::dense the-label)
+                                ::outside (or (= ::dense the-label)
+                                              (= ::transitional the-label)))))
+                          grid-cells))))))
 
 (defn grid-cell->grid-group [the-grid-cell all-grid-cells]
   ;;TODO spec this
@@ -499,11 +499,11 @@
                      (let [biggest-neighbor        (->>
                                                      neighbors-clusters
                                                      (pmap (fn [cluster]
-                                                            hash-map
-                                                            :cluster cluster
-                                                            :cluster-size (cluster->size
-                                                                            cluster
-                                                                            @updated-state*)))
+                                                             hash-map
+                                                             :cluster cluster
+                                                             :cluster-size (cluster->size
+                                                                             cluster
+                                                                             @updated-state*)))
                                                      (sort-by :cluster-size)
                                                      first
                                                      :cluster)
@@ -536,14 +536,14 @@
                                           not-empty)]
                  (when neighbors-clusters
                    (let [n-clusters-w-grid-added (pmap (fn [neighbors-cluster]
-                                                        (let [neighbors-cluster-w-grid (merge (cluster->grid-cells neighbors-cluster @updated-state*)
-                                                                                              {pos-idx char-vec})
-                                                              is-outside               (= ::outside (pos-is-inside-or-outside-group pos-idx (map first neighbors-cluster-w-grid)))
-                                                              cluster-size             (cluster->size neighbors-cluster @updated-state*)]
-                                                          {:is-outside   is-outside
-                                                           :cluster-size cluster-size
-                                                           :cluster      neighbors-cluster}))
-                                                      neighbors-clusters)
+                                                         (let [neighbors-cluster-w-grid (merge (cluster->grid-cells neighbors-cluster @updated-state*)
+                                                                                               {pos-idx char-vec})
+                                                               is-outside               (= ::outside (pos-is-inside-or-outside-group pos-idx (map first neighbors-cluster-w-grid)))
+                                                               cluster-size             (cluster->size neighbors-cluster @updated-state*)]
+                                                           {:is-outside   is-outside
+                                                            :cluster-size cluster-size
+                                                            :cluster      neighbors-cluster}))
+                                                       neighbors-clusters)
                          biggest                 (->>
                                                    n-clusters-w-grid-added
                                                    (remove #(not (:is-outside %)))
@@ -579,11 +579,12 @@
       (reset! state-after-put* (p ::adjust-clustering (adjust-clustering @state-after-put* t))))
     @state-after-put*))
 
-(defn dstream-iterations [{:keys [::state]} raw-data]
+(defn dstream-iterations [{:keys [::state]} raw-data & {:keys [state-append-every]}]
   (log-it [state raw-data] ::dstream-iterations.starting {:raw-data-count   (count raw-data)
                                                           :state-properties (::properties state)})
-  (let [time*      (atom 0)
-        the-state* (atom state)]
+  (let [time*           (atom 0)
+        the-state*      (atom state)
+        state-appender* (atom {})]
     (if-not (get-in state [::properties ::N])
       (do
         (swap! the-state* assoc-in
@@ -591,16 +592,21 @@
                (phase-space->cell-count
                  (get-in @the-state* [::properties])))))
     (doseq [{:keys [::raw-datum]} raw-data]
+      (if (and state-append-every
+               (= 0 (mod @time* state-append-every)))
+        (swap! state-appender* assoc @time* @the-state*))
       (if (= 0 (mod @time* (int (/ (count raw-data) 100))))
         (log-it raw-datum ::put-datum [{:t @time*} {:cluster-count (count (distinct (map ::cluster (map second (::grid-cells @the-state*)))))
-                                                    :grid-count (count (::grid-cells @the-state*))
-                                                    :N (::N (::properties @the-state*))}]))
+                                                    :grid-count    (count (::grid-cells @the-state*))
+                                                    :N             (::N (::properties @the-state*))}]))
       (let [the-data {::state @the-state* ::raw-datum raw-datum ::t @time*}]
         (reset! the-state*
                 (p ::one-dstream-iteration
                    (one-dstream-iteration the-data))))
       (swap! time* inc))
-    @the-state*))
+    {:final-state   @the-state*
+     :initial-state state
+     :state-ts      @state-appender*}))
 
 
 (s/fdef initial-clustering
