@@ -48,7 +48,7 @@
   (->> (for [y (range 10) x (range 50)] (n/noise2 (* x 0.1) (* y 0.25)))
        (viz/matrix-2d 50 10)))
 
-(defn grids-2d->heatmap-vec [grid-cells props]
+(defn grids-2d->heatmap-vec [grid-cells props & {:keys [clusters-only]}]
   (let [phase-space (::core/phase-space props)
         d1          (first phase-space)
         d2          (second phase-space)
@@ -59,8 +59,20 @@
 
     (let [vecs
           (for [c (range cols) r (range rows)]
-            (let [num (or (::core/density-at-last-update (get grid-cells [r c]))
-                          0.0)]
+            (let [num (or
+                        (when clusters-only
+                          (do
+                            (println "clusers only")
+                            (let [cluster (::core/cluster (get grid-cells [r c]))]
+                              (println "cluster:" cluster)
+                              (if (and (not (= nil cluster))
+                                       (not (= "NO_CLASS" cluster)))
+                                (do
+                                  (println "cluster: " cluster)
+                                  (::core/density-at-last-update (get grid-cells [r c])))
+                                0.0))))
+                        (::core/density-at-last-update (get grid-cells [r c]))
+                        0.0)]
               num
               ))]
       {:matrix (->>
@@ -103,26 +115,25 @@
        (spit (str prefix "-" (name id) ".svg"))))
 
 (defn display-state [props grid-cells]
-  #_(let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]
+  (if (= 2 (::core/dimensions props))
+    (let [hm1 (grids-2d->heatmap-vec grid-cells props)
+          hm2 (grids-2d->heatmap-vec grid-cells props :clusters-only true)]
+
+      (cartesian-viz "hm" :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
+      (cartesian-viz "hm" :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2)))
+    (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]
                                                 (let [cluster (::core/cluster char-vec)]
                                                   (if-not (or (= nil cluster)
                                                               (= "NO_CLASS" cluster))
                                                     pos-idx)))
-                                              grid-cells))]
-      (if (= 2 (::core/dimensions props))
-        {"none" cluster-positions}
-        (let [_            (println "cluster positions: " cluster-positions)
-              input-matrix (matrix/array :vectorz cluster-positions)
-              _            (println "input mat;" input-matrix)
-              algo-name    :parallel-bht
-              _            (println "tsne: " algo-name)
-              output-map   {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
-          output-map)))
-  (let [hm1 (grids-2d->heatmap-vec grid-cells props)
-        hm2 (grids-2d->heatmap-vec grid-cells props)]
-
-    (cartesian-viz "hm" :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
-    (cartesian-viz "hm" :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
+                                              grid-cells))
+          _                 (println "cluster positions: " cluster-positions)
+          input-matrix      (matrix/array :vectorz cluster-positions)
+          _                 (println "input mat;" input-matrix)
+          algo-name         :parallel-bht
+          _                 (println "tsne: " algo-name)
+          output-map        {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
+      output-map))
   )
 
 
@@ -130,41 +141,43 @@
 
 
 (deftest stuff
-  (let [test-props   {
-                      ::core/c_m         3.0
+  (let [test-props   {::core/c_m         3.0
                       ::core/c_l         0.8
                       ::core/lambda      0.998
                       ::core/beta        0.3
                       ::core/dimensions  2
                       ::core/phase-space [
-                                          {::core/domain-start    -2.5
-                                           ::core/domain-end      2.5
+                                          {::core/domain-start    -1.0
+                                           ::core/domain-end      1.0
                                            ::core/domain-interval 0.1}
-                                          {::core/domain-start    -2.5
-                                           ::core/domain-end      2.5
+                                          {::core/domain-start    -1.0
+                                           ::core/domain-end      1.0
                                            ::core/domain-interval 0.1}]
-                      ::core/gap-time    250}
-        ;centroids    (vec (repeatedly 4 (fn [] (get-random-sample :unifrom test-props))))
-        ;_            (println "centroids: " centroids)
-        samples      (repeatedly 50000 #(hash-map
-                                         ::core/raw-datum
-                                         {::core/position-value
-                                                       (vec
-                                                         (take
-                                                           (::core/dimensions test-props)
-                                                           (repeatedly
-                                                             (fn []
-
-                                                               (if (> 0.5 (rand))
-                                                                 (+ 0.1
-                                                                    (* 0.15
-                                                                       (first
-                                                                         (random/sample-normal 1))))
-                                                                 (+ 0.9
-                                                                    (* 0.25
-                                                                       (first
-                                                                         (random/sample-normal 1)))))))))
-                                          ::core/value 1.0}))
+                      ::core/gap-time    100}
+        samples      (repeatedly 10000 #(hash-map
+                                          ::core/raw-datum
+                                          {::core/position-value
+                                                        (vec
+                                                          (take
+                                                            (::core/dimensions test-props)
+                                                            (repeatedly
+                                                              (fn []
+                                                                (let [r (rand)]
+                                                                  (cond (<= 0.0 r 0.9) (+ 0.1
+                                                                                          (* 0.1
+                                                                                             (first
+                                                                                               (random/sample-normal 1))))
+                                                                        (<= 0.9 r 0.95) (-
+                                                                                         (* 0.05
+                                                                                            (first
+                                                                                              (random/sample-normal 1)))
+                                                                                         0.3)
+                                                                        (<= 0.95 r 1.0) (+
+                                                                                          (* 0.05
+                                                                                             (first
+                                                                                               (random/sample-normal 1)))
+                                                                                          0.3)))))))
+                                           ::core/value 1.0}))
 
         test-state   {::core/state {::core/grid-cells           {}
                                     ::core/properties           test-props
@@ -178,6 +191,6 @@
     ;;TODO abandon tsne for a simple dxd grid of 2d scatter plots
 
     (clojure.pprint/pprint displayable)
-    ;(clojure.pprint/pprint sorted-stats)
+    (clojure.pprint/pprint sorted-stats)
     )
   )
