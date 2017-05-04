@@ -99,15 +99,19 @@
                              (repeatedly
                                (fn []
                                  (let [r (rand)]
-                                   (cond (< t (int (/ time-intervals 2))) (+ 0.1
+                                   (cond (< t (int (/ time-intervals 3))) (+ 0.05
                                                                              (* 0.2
                                                                                 (first
                                                                                   (random/sample-normal 1))))
-                                         :else (-
-                                                 (* 0.2
-                                                    (first
-                                                      (random/sample-normal 1)))
-                                                 0.4)))))))
+                                         (< t (int (* 2 (/ time-intervals 3)))) (-
+                                                                                  (* 0.2
+                                                                                     (first
+                                                                                       (random/sample-normal 1)))
+                                                                                  0.4)
+                                         :else (+ 0.3
+                                                  (* 0.2
+                                                     (first
+                                                       (random/sample-normal 1))))))))))
      ::core/value 1.0}))
 
 (deftest stuff
@@ -124,23 +128,21 @@
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
                         ::core/gap-time    500}
-        time-intervals 20000
+        time-intervals 30000
         samples        (map (fn [t]
-                              (sample-at-time t time-intervals test-props)
-                              ) (range time-intervals))
+                              (sample-at-time t time-intervals test-props)) (range time-intervals))
 
         test-state     {::core/state {::core/grid-cells           {}
                                       ::core/properties           test-props
                                       ::core/initialized-clusters false}}
 
-        _              (println "samples count: " (count samples))
         [{:keys [final-state state-ts]} prof-stats] (profiled {} (core/dstream-iterations test-state samples :state-append-every (int (/ time-intervals 20))))
         final-grids    (::core/grid-cells final-state)
         sorted-stats   (take 3 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))
         displayable    (display-state "final" test-props (::core/grid-cells final-state))]
 
     (doall (map-indexed (fn [idx [t staat]]
-                          (display-state t test-props (::core/grid-cells staat))) state-ts))
+                          (display-state (format "%09d" t) test-props (::core/grid-cells staat))) state-ts))
     ;;TODO abandon tsne for a simple dxd grid of 2d scatter plots
 
     ;(clojure.pprint/pprint sorted-stats)

@@ -1,32 +1,13 @@
 # clj-dstream
 
-FIXME: description
+## What Is It
 
-## Installation
 
-Download from http://example.com/FIXME.
+Data stream with three clusters, one at a time: 
+![3 Cluster GIF][clustergif]
 
-## Usage
+[clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/src/doc/resources/3-clusters-1-at-a-time/animated-loop.gif "3 Clusters One At A Time"
 
-FIXME: explanation
-
-    $ java -jar clj-dstream-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 

@@ -9,6 +9,9 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
+;;TODO dynamically compute gap time
+;;TODO get clusters from state for user
+
 (defn log-it [context summary data]
   (info (hash context) summary data))
 
