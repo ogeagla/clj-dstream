@@ -667,9 +667,3 @@
 ;(stest/instrument `is-grid-cluster)
 ;(stest/instrument `initial-clustering)
 ;(stest/instrument `update-char-vec-density)
-
-
-
-(def test-raw-data
-  {::value          0.1
-   ::position-value [0.5 0.5 0.5 0.5]})

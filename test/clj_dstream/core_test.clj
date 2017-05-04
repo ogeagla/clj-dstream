@@ -3,6 +3,10 @@
             [clj-dstream.core :as core]
             [clj-dstream.test-utils :as test-utils]))
 
+(def test-raw-data
+  {::core/value          0.1
+   ::core/position-value [0.5 0.5 0.5 0.5]})
+
 (def test-state
   {::core/grid-cells           {[10 1 2 2] {::core/last-update-time              0
                                        ::core/last-time-removed-as-sporadic 0
@@ -72,7 +76,7 @@
   ;;TODO assert something
   (testing "Puts raw data into state"
     (let [test-state    {::core/state test-state}
-          test-raw-data {::core/raw-datum core/test-raw-data}
+          test-raw-data {::core/raw-datum test-raw-data}
 
           put-state     (core/put (merge test-state test-raw-data {::core/t      2
                                                                    ::core/lambda 0.3}))
@@ -82,7 +86,7 @@
 (deftest dstream-iterations
   (testing "Dstream iterations"
     (let [test-state    {::core/state test-state}
-          test-raw-data (repeat 1000 {::core/raw-datum core/test-raw-data})
+          test-raw-data (repeat 1000 {::core/raw-datum test-raw-data})
           final-state   (core/dstream-iterations test-state test-raw-data)])))
 
 (deftest computes-cell-count-from-phase-space
