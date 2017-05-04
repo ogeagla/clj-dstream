@@ -97,9 +97,15 @@
     position-value
     (map-indexed (fn [idx position-val]
                    (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)]
-                     (if (or (> position-val domain-end)
+                     (when-not (or (> position-val domain-end)
                              (< position-val domain-start))
-                       (throw
+                       (do
+                         ;;TODO what do here?
+                         ;; do throw exception,
+                         ;; conform data into range (creating hotspots on edge?),
+                         ;; or just ignore the datum?
+                           (max domain-start (min domain-end position-val)))
+                       #_(throw
                          (ex-info
                            "Raw data value outside range" {:keys idx
                                                            :data {:value  position-val
