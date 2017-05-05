@@ -480,9 +480,10 @@
                (assoc (second grid-w-biggest-neighbor) ::cluster current-cluster))))))
 
 (defn adjust-clustering [state t]
+  (log-it [state t] ::adjust-clustering [{:t t}])
   (let [updated-state* (atom (update-grid-cells state t))]
     (doseq [[pos-idx char-vec] (::grid-cells @updated-state*)]
-      ;(log-it pos-idx ::adjust-clustering [{:t t} char-vec])
+      ;(log-it pos-idx ::adjust-clustering-for-char-vec [{:t t} char-vec])
       (when (= t (::last-time-label-changed char-vec))
         (do
           ;(log-it pos-idx ::label-changed-this-iteration char-vec)
@@ -584,6 +585,20 @@
       (reset! state-after-put* (p ::adjust-clustering (adjust-clustering @state-after-put* t))))
     @state-after-put*))
 
+(defn properties->gap-time [properties]
+  (let [N          (::N properties)
+        c_l        (::c_l properties)
+        c_m        (::c_m properties)
+        lambda     (::lambda properties)
+        max-result (max (/ c_l c_m)
+                        (/ (- N c_m)
+                           (- N c_l)))
+        value      (/ (Math/log max-result)
+                      (Math/log lambda))
+        gap-time   (Math/floor value)]
+    (log-it properties ::gap-time gap-time)
+    gap-time))
+
 (defn dstream-iterations [{:keys [::state]} raw-data & {:keys [state-append-every]}]
   (log-it [state raw-data] ::dstream-iterations.starting {:raw-data-count   (count raw-data)
                                                           :state-properties (::properties state)})
@@ -596,6 +611,11 @@
                [::properties ::N]
                (phase-space->cell-count
                  (get-in @the-state* [::properties])))))
+    (if-not (get-in state [::properties ::gap-time])
+      (do
+        (swap! the-state* assoc-in
+               [::properties ::gap-time]
+               (properties->gap-time (::properties @the-state*)))))
     (doseq [{:keys [::raw-datum]} raw-data]
       (if (and state-append-every
                (= 0 (mod @time* state-append-every)))

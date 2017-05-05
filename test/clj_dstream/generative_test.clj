@@ -123,12 +123,12 @@
                         ::core/phase-space [
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
-                                             ::core/domain-interval 0.1}
+                                             ::core/domain-interval 0.05}
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
-                                             ::core/domain-interval 0.1}]
-                        ::core/gap-time    500}
-        time-intervals 30000
+                                             ::core/domain-interval 0.05}]
+                        ::core/gap-time    200}
+        time-intervals 5000
         samples        (map (fn [t]
                               (sample-at-time t time-intervals test-props)) (range time-intervals))
 
@@ -136,7 +136,7 @@
                                       ::core/properties           test-props
                                       ::core/initialized-clusters false}}
 
-        [{:keys [final-state state-ts]} prof-stats] (profiled {} (core/dstream-iterations test-state samples :state-append-every (int (/ time-intervals 20))))
+        [{:keys [final-state state-ts]} prof-stats] (profiled {} (core/dstream-iterations test-state samples :state-append-every (int (/ time-intervals 50))))
         final-grids    (::core/grid-cells final-state)
         sorted-stats   (take 3 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))
         displayable    (display-state "final" test-props (::core/grid-cells final-state))]
