@@ -314,18 +314,23 @@
                                         grids))]
        grids-w-new-label)))
 
+(defn update-char-vec-in-state! [state* pos-idx new-char-vec]
+  (p ::update-char-vec-in-state!
+     (swap! state* assoc-in [::grid-cells pos-idx] new-char-vec)))
+
 (defn update-grid-cells [state t]
   ;;TODO spec this
   (p ::update-grid-cells
      (let [lambda (get-in state [::properties ::lambda])
            state* (atom state)]
        (doseq [[pos-idx char-vec] (::grid-cells @state*)]
-         (swap! state* assoc-in
-                [::grid-cells pos-idx]
-                (update-char-vec-label
-                  {::char-vec   (update-char-vec-density char-vec t lambda false)
-                   ::properties (::properties state)
-                   ::t          t})))
+         (update-char-vec-in-state!
+           state*
+           pos-idx
+           (update-char-vec-label
+             {::char-vec   (update-char-vec-density char-vec t lambda false)
+              ::properties (::properties state)
+              ::t          t})))
        @state*)))
 
 (defn dense-grids->unique-clusters [state]
@@ -422,11 +427,7 @@
 (defn- step-nine! [current-cluster updated-state* pos-idx biggest-neighbor char-vec]
   (if (= "NO_CLASS" current-cluster)
     ;;step 10
-    (swap! updated-state* assoc-in [::grid-cells pos-idx]
-           (do
-             ;(log-it pos-idx ::move-grid-to-biggest-neighboring-cluster
-             ;        biggest-neighbor)
-             (assoc char-vec ::cluster biggest-neighbor)))
+    (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster biggest-neighbor))
     (swap! updated-state* assoc-in [::grid-cells]
            (merge (::grid-cells @updated-state*)
                   (if (> (cluster->size current-cluster @updated-state*)
@@ -448,8 +449,7 @@
   (when (= ::sparse (::label char-vec))
     (let [old-cluster (::cluster char-vec)]
       ;(log-it pos-idx ::sparse-label {:cluster old-cluster})
-      (swap! updated-state* assoc-in [::grid-cells pos-idx]
-             (assoc char-vec ::cluster "NO_CLASS"))
+      (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster "NO_CLASS"))
       (let [new-cluster (cluster->grid-cells old-cluster @updated-state*)]
         ;;step 6
         (when (and
@@ -472,12 +472,13 @@
     (when (and (not (= "NO_CLASS" current-cluster))
                (> (cluster->size current-cluster @updated-state*)
                   (cluster->size biggest-neighbor @updated-state*)))
-      (swap! updated-state* assoc-in [::grid-cells (first grid-w-biggest-neighbor)]
-             (do
-               (log-it pos-idx ::move-neighoring-grid-to-current-cluster
-                       {:from biggest-neighbor
-                        :to   current-cluster})
-               (assoc (second grid-w-biggest-neighbor) ::cluster current-cluster))))))
+      (update-char-vec-in-state!
+        updated-state*
+        (first grid-w-biggest-neighbor)
+        (assoc
+          (second grid-w-biggest-neighbor)
+          ::cluster
+          current-cluster)))))
 
 (defn adjust-clustering [state t]
   (log-it [state t] ::adjust-clustering [{:t t}])
@@ -556,12 +557,7 @@
                                                    (sort-by :cluster-size)
                                                    last)]
                      (when biggest
-                       (swap! updated-state* assoc-in [::grid-cells pos-idx]
-                              (do
-                                ;(log-it pos-idx ::move-current-grid-to-biggest-neighboring-cluster-ensuring-it-is-an-outside-grid
-                                ;        {:from (::cluster char-vec)
-                                ;         :to   (:cluster biggest)})
-                                (assoc char-vec ::cluster (:cluster biggest)))))))))))))
+                       (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster (:cluster biggest))))))))))))
     @updated-state*))
 
 (defn detect-and-remove-sporadic-grids [state t]
