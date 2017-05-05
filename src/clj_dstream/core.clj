@@ -9,9 +9,8 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-;;TODO dynamically compute gap time
-;;TODO get clusters from state for user
-;;TODO test with crater dataset https://blog.dominodatalab.com/topology-and-density-based-clustering/
+;;TODO more than one datum per time slice? 
+;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
 
 (def do-logging (atom true))
 
