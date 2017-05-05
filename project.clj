@@ -14,3 +14,5 @@
   :main ^:skip-aot clj-dstream.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
+
+;;TODO add fs so that each test can have its own output dir
