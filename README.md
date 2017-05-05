@@ -1,7 +1,7 @@
 # clj-dstream
 
 ## What Is It
-
+Density-based data stream clustering for arbitrary dimension data written in Clojure.
 ![3 Cluster GIF][clustergif]
 
 [clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/3-clusters-1-at-a-time/animated-loop.gif "3 Clusters One At A Time"
