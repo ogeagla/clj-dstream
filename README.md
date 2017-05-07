@@ -17,6 +17,7 @@ Sample data stream with moving cluster:
 
 When faced with data shapes like a crater, which can look like so:
 ![Crater Grids SVG][cratergrids]
+
 Many clustering algorithms would combine these clusters into one, but DStream results look better:
 ![Crater Clusters GIF][craterclusters]
 
