@@ -16,9 +16,9 @@ Sample data stream with moving cluster:
 ## Crater Dataset
 
 When faced with data shapes like a crater, which can look like so:
-![Crater Grids SVG](cratergrids)
+![Crater Grids SVG][cratergrids]
 Many clustering algorithms would combine these clusters into one, but DStream results look better:
-![Crater Clusters GIF](craterclusters)
+![Crater Clusters GIF][craterclusters]
 
 [craterclusters]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/animated-clusters-loop.gif "Crater Clusters"
 [cratergrids]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/grids-crater-sampling-000000000-rainbow2.svg "Crater Data Stream"
