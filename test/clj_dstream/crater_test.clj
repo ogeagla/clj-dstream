@@ -18,7 +18,7 @@
 
 (defn sample-crater [circle-r ring-minor-r ring-major-r]
   (let [random-thing (rand)]
-    (if (>= 0.1 random-thing)
+    (if (>= 0.05 random-thing)
       (sample-circle circle-r)
       (sample-ring ring-minor-r ring-major-r))))
 
@@ -29,9 +29,9 @@
         d2           (second phase-space)
         smallest-dim (min (- (::core/domain-end d1) (::core/domain-start d1))
                           (- (::core/domain-end d2) (::core/domain-start d2)))
-        circle-r     (/ smallest-dim 8.0)
+        circle-r     (/ smallest-dim 12.0)
         ring-minor-r (+ circle-r (/ smallest-dim 5.0))
-        ring-major-r (+ ring-minor-r (/ smallest-dim 10.0))]
+        ring-major-r (+ ring-minor-r (/ smallest-dim 8.0))]
     (hash-map
       ::core/raw-datum {::core/position-value
                         (sample-crater circle-r ring-minor-r ring-major-r)}
@@ -43,12 +43,11 @@
                ::core/lambda      0.998
                ::core/beta        0.3
                ::core/dimensions  2
-               ::core/phase-space [
-                                   {::core/domain-start    -1.0
+               ::core/phase-space [{::core/domain-start    -1.0
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}
                                    {::core/domain-start    -1.0
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
-               ::core/gap-time    200}]
-    (api/iterate-with-sampling sample-at-time 100000 "crater-sampling" props)))
+               ::core/gap-time    500}]
+    (api/iterate-with-sampling sample-at-time 20000 "crater-sampling" props)))

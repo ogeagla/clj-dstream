@@ -38,6 +38,7 @@
 (s/def ::phase-space (s/coll-of ::domain))
 
 (s/def ::t int?)
+(s/def ::points-per-time-slice int?)
 
 (s/def ::neighbor-dimension int?)
 
@@ -573,16 +574,6 @@
     (swap! state* assoc-in [::grid-cells] new-grid-cells)
     @state*))
 
-(defn one-dstream-iteration [{:keys [::state ::raw-datum ::t] :as data}]
-  (let [state-after-put* (atom (put data))
-        gap-time         (::gap-time (::properties state))]
-    (when (= gap-time t)
-      (reset! state-after-put* (p ::initial-clustering (initial-clustering @state-after-put* t))))
-    (when (= 0 (mod t gap-time))
-      (reset! state-after-put* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state-after-put* t)))
-      (reset! state-after-put* (p ::adjust-clustering (adjust-clustering @state-after-put* t))))
-    @state-after-put*))
-
 (defn properties->gap-time [properties]
   (let [N          (::N properties)
         c_l        (::c_l properties)
@@ -596,6 +587,18 @@
         gap-time   (Math/floor value)]
     (log-it properties ::gap-time gap-time)
     gap-time))
+
+(defn one-dstream-iteration [{:keys [::state ::raw-datum ::t] :as data}]
+  (let [
+        ;state*   (atom (put data))
+        state*   (atom state)
+        gap-time (::gap-time (::properties state))]
+    (when (= gap-time t)
+      (reset! state* (p ::initial-clustering (initial-clustering @state* t))))
+    (when (= 0 (mod t gap-time))
+      (reset! state* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state* t)))
+      (reset! state* (p ::adjust-clustering (adjust-clustering @state* t))))
+    @state*))
 
 (s/fdef initial-clustering
         :args (s/cat :u ::state :v ::t)
@@ -654,24 +657,29 @@
         :args (s/cat :u (s/keys :req [::phase-space]))
         :ret int?)
 
+(defn instrument-specs! []
+  (stest/instrument `one-dstream-iteration)
+  (stest/instrument `position-value->position-index)
+  (stest/instrument `put)
+  (stest/instrument `dstream-iterations)
+  (stest/instrument `update-char-vec-label)
+  (stest/instrument `phase-space->cell-count)
+  ;;TODO make this spec work
+  ;(stest/instrument `are-neighbors)
+  (stest/instrument `is-grid-group)
+  (stest/instrument `pos-is-inside-or-outside-group)
+  (stest/instrument `is-grid-cluster)
+  (stest/instrument `initial-clustering)
+  (stest/instrument `update-char-vec-density))
+
 (defn dstream-iterations [{:keys [::state]} raw-data & {:keys [state-append-every
-                                                               instrument-spec]}]
+                                                               instrument-spec
+                                                               data-per-time-interval]
+                                                        :or   {data-per-time-interval 100}}]
   (log-it [state raw-data] ::dstream-iterations.starting {:raw-data-count   (count raw-data)
                                                           :state-properties (::properties state)})
   (when instrument-spec
-    (stest/instrument `one-dstream-iteration)
-    (stest/instrument `position-value->position-index)
-    (stest/instrument `put)
-    (stest/instrument `dstream-iterations)
-    (stest/instrument `update-char-vec-label)
-    (stest/instrument `phase-space->cell-count)
-    ;;TODO make this spec work
-    ;(stest/instrument `are-neighbors)
-    (stest/instrument `is-grid-group)
-    (stest/instrument `pos-is-inside-or-outside-group)
-    (stest/instrument `is-grid-cluster)
-    (stest/instrument `initial-clustering)
-    (stest/instrument `update-char-vec-density))
+    (instrument-specs!))
   (let [time*           (atom 0)
         the-state*      (atom state)
         state-appender* (atom {})]
@@ -691,13 +699,23 @@
                (= 0 (mod @time* state-append-every)))
         (swap! state-appender* assoc @time* @the-state*))
       (if (= 0 (mod @time* (int (/ (count raw-data) 100))))
-        (log-it raw-datum ::put-datum [{:t @time*} {:cluster-count (count (distinct (map ::cluster (map second (::grid-cells @the-state*)))))
-                                                    :grid-count    (count (::grid-cells @the-state*))
-                                                    :N             (::N (::properties @the-state*))}]))
-      (let [the-data {::state @the-state* ::raw-datum raw-datum ::t @time*}]
-        (reset! the-state*
-                (p ::one-dstream-iteration
-                   (one-dstream-iteration the-data))))
+        (log-it raw-datum ::put-datum [{:t @time*}
+                                       {:cluster-count (count
+                                                         (distinct
+                                                           (map ::cluster
+                                                                (map second (::grid-cells @the-state*)))))
+                                        :grid-count    (count (::grid-cells @the-state*))
+                                        :N             (::N (::properties @the-state*))}]))
+      (let [the-data {::state     @the-state*
+                      ::raw-datum raw-datum
+                      ::t         @time*}]
+        (reset! the-state* (put the-data))
+        (if (= 0 (mod @time* data-per-time-interval))
+          (do
+            (println "doing dsteram iter: " @time*)
+            (reset! the-state*
+                    (p ::one-dstream-iteration
+                       (one-dstream-iteration the-data))))))
       (swap! time* inc))
     {:final-state   @the-state*
      :initial-state state
