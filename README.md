@@ -21,7 +21,7 @@ Many clustering algorithms would combine these clusters into one, but DStream re
 ![Crater Clusters GIF][craterclusters]
 
 [craterclusters]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/animated-clusters-loop.gif "Crater Clusters"
-[cratergrids]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/grids-crater-sampling-000000000-rainbow2.svg "Crater Data Stream"
+[cratergrids]: https://cdn.rawgit.com/ogeagla/clj-dstream/master/doc/resources/crater/grids-crater-sampling-000000000-rainbow2.svg "Crater Data Stream"
 
 
 ## License
