@@ -3,7 +3,7 @@
 ## What Is It
 Density-based data stream clustering for arbitrary dimension data written in Clojure.
 
-Reference [paper](refpaper).
+Reference [paper][refpaper].
 
 
 Sample clustering for time-series data with moving hotspot:
