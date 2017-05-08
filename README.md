@@ -6,7 +6,7 @@ Density-based data stream clustering for arbitrary dimension data written in Clo
 Reference [paper](refpaper).
 
 
-Sample data stream with moving cluster:
+Sample clustering for time-series data with moving hotspot:
 ![Three Clusters GIF][clustergif]
 
 
