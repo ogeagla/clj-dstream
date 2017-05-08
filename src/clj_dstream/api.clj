@@ -35,7 +35,7 @@
                                         :instrument-spec
                                         false)))
 
-(defn iterate-with-sampling [sampling-fn time-itervals out-name props]
+(defn iterate-with-sampling [sampling-fn time-itervals out-name out-dir props]
 
   (let [samples      (map (fn [t]
                             (sampling-fn t time-itervals props))
@@ -48,10 +48,10 @@
         [{:keys [final-state state-ts]} prof-stats] (iterate-with-profiling test-state samples)
         final-grids  (::core/grid-cells final-state)
         sorted-stats (take 5 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))
-        displayable  (visualize/display-state (str out-name "-final-") props (::core/grid-cells final-state))]
+        displayable  (visualize/display-state out-dir (str out-name "-final-") props (::core/grid-cells final-state))]
 
     (doall (map-indexed (fn [idx [t staat]]
-                          (visualize/display-state (str  out-name "-" (format "%09d" t)) props (::core/grid-cells staat))) state-ts))
+                          (visualize/display-state out-dir (str out-name "-" (format "%09d" t)) props (::core/grid-cells staat))) state-ts))
     ;;TODO abandon tsne for a simple dxd grid of 2d scatter plots
     ;(clojure.pprint/pprint sorted-stats)
     (println "state-ts size: " (count state-ts)))

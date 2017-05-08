@@ -43,4 +43,4 @@
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
                ::core/gap-time    200}]
-    (api/iterate-with-sampling sample-at-time 1000 "normal-sampling" props)))
+    (api/iterate-with-sampling sample-at-time 1000 "normal-sampling" "normal-sample-out" props)))

@@ -9,7 +9,9 @@
             [thi.ng.color.gradients :as grad]
             [think.tsne.core :as tsne]
             [clojure.core.matrix :as matrix]
-            [clj-dstream.core :as core]))
+            [clj-dstream.core :as core]
+            [me.raynes.fs :as fs]
+            [clojure.java.shell :only [sh]]))
 
 
 (defn heatmap-spec
@@ -66,23 +68,29 @@
        :rows   rows
        :cols   cols})))
 
-(defn display-state [name props grid-cells]
+(defn display-state [dir name props grid-cells]
+
+  (if-not (fs/exists? dir)
+    (fs/mkdir dir))
+
   (if (= 2 (::core/dimensions props))
     (let [hm1 (grids-2d->heatmap-vec grid-cells props)
           hm2 (grids-2d->heatmap-vec grid-cells props :clusters-only true)]
 
-      (cartesian-viz (str "out/grids-" name) :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
-      (cartesian-viz (str "out/clusters-" name) :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2)))
-    (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]
-                                                (let [cluster (::core/cluster char-vec)]
-                                                  (if-not (or (= nil cluster)
-                                                              (= "NO_CLASS" cluster))
-                                                    pos-idx)))
-                                              grid-cells))
-          _                 (println "cluster positions: " cluster-positions)
-          input-matrix      (matrix/array :vectorz cluster-positions)
-          _                 (println "input mat;" input-matrix)
-          algo-name         :parallel-bht
-          _                 (println "tsne: " algo-name)
-          output-map        {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
-      output-map)))
+      (cartesian-viz (str dir "/grids-" name) :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
+      (cartesian-viz (str dir "/clusters-" name) :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2))
+      ;;TODO sh converts
+      ;(sh "convert")
+     )
+    (do
+      (throw (ex-info "Unsupported dimensionality" props))
+      (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]
+                                                  (let [cluster (::core/cluster char-vec)]
+                                                    (if-not (or (= nil cluster)
+                                                                (= "NO_CLASS" cluster))
+                                                      pos-idx)))
+                                                grid-cells))
+            input-matrix      (matrix/array :vectorz cluster-positions)
+            algo-name         :parallel-bht
+            output-map        {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
+        output-map))))

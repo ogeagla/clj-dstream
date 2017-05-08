@@ -588,10 +588,8 @@
     (log-it properties ::gap-time gap-time)
     gap-time))
 
-(defn one-dstream-iteration [{:keys [::state ::raw-datum ::t] :as data}]
-  (let [
-        ;state*   (atom (put data))
-        state*   (atom state)
+(defn one-dstream-update [{:keys [::state ::raw-datum ::t] :as data}]
+  (let [state*   (atom state)
         gap-time (::gap-time (::properties state))]
     (when (= gap-time t)
       (reset! state* (p ::initial-clustering (initial-clustering @state* t))))
@@ -631,7 +629,7 @@
                                :pos-dim (s/keys :opt [::neighbor-dimension])))
         :ret boolean?)
 
-(s/fdef one-dstream-iteration
+(s/fdef one-dstream-update
         :args (s/cat :u (s/keys :req [::state ::raw-datum]))
         :ret (s/keys :req [::state]))
 
@@ -658,7 +656,7 @@
         :ret int?)
 
 (defn instrument-specs! []
-  (stest/instrument `one-dstream-iteration)
+  (stest/instrument `one-dstream-update)
   (stest/instrument `position-value->position-index)
   (stest/instrument `put)
   (stest/instrument `dstream-iterations)
@@ -712,10 +710,9 @@
         (reset! the-state* (put the-data))
         (if (= 0 (mod @time* data-per-time-interval))
           (do
-            (println "doing dsteram iter: " @time*)
             (reset! the-state*
                     (p ::one-dstream-iteration
-                       (one-dstream-iteration the-data))))))
+                       (one-dstream-update the-data))))))
       (swap! time* inc))
     {:final-state   @the-state*
      :initial-state state
