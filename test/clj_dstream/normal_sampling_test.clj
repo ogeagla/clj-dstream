@@ -6,7 +6,7 @@
             [clj-dstream.visualize :as visualize]
             [clj-dstream.api :as api]))
 
-(defn sample-at-time [t time-intervals props]
+(defn time->3-cluster-sample [t time-intervals props]
   (hash-map
     ::core/raw-datum
     {::core/position-value
@@ -43,4 +43,4 @@
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
                ::core/gap-time    200}]
-    (api/iterate-with-sampling sample-at-time 1000 "normal-sampling" "normal-sample-out" props)))
+    (api/iterate-with-sampling-and-visualization! time->3-cluster-sample 10000 "normal-sampling" "normal-sample-out" props)))

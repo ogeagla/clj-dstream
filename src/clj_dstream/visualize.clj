@@ -11,7 +11,7 @@
             [clojure.core.matrix :as matrix]
             [clj-dstream.core :as core]
             [me.raynes.fs :as fs]
-            [clojure.java.shell :only [sh]]))
+            [clojure.java.shell :refer [sh]]))
 
 
 (defn heatmap-spec
@@ -68,20 +68,22 @@
        :rows   rows
        :cols   cols})))
 
-(defn display-state [dir name props grid-cells]
+(defn animate-results [glob output]
+  (println "Creating animated gif from files, to file: " glob " -> " output)
+  (try
+    (sh "convert" "-delay" "35" "-loop" "0" glob output)
+    (catch Throwable t
+      (println "Could not create animated gif:" t))))
 
+(defn display-state [dir name props grid-cells]
   (if-not (fs/exists? dir)
     (fs/mkdir dir))
-
   (if (= 2 (::core/dimensions props))
     (let [hm1 (grids-2d->heatmap-vec grid-cells props)
           hm2 (grids-2d->heatmap-vec grid-cells props :clusters-only true)]
 
       (cartesian-viz (str dir "/grids-" name) :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
-      (cartesian-viz (str dir "/clusters-" name) :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2))
-      ;;TODO sh converts
-      ;(sh "convert")
-     )
+      (cartesian-viz (str dir "/clusters-" name) :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2)))
     (do
       (throw (ex-info "Unsupported dimensionality" props))
       (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]

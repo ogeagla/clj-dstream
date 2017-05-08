@@ -22,8 +22,7 @@
       (sample-circle circle-r)
       (sample-ring ring-minor-r ring-major-r))))
 
-(defn sample-at-time [t time-intervals props]
-
+(defn time->crater-sample [t time-intervals props]
   (let [phase-space  (::core/phase-space props)
         d1           (first phase-space)
         d2           (second phase-space)
@@ -50,4 +49,4 @@
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
                ::core/gap-time    500}]
-    (api/iterate-with-sampling sample-at-time 5000 "crater-sampling" "crater-out" props)))
+    (api/iterate-with-sampling-and-visualization! time->crater-sample 5000 "crater-sampling" "crater-out" props)))
