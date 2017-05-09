@@ -1,5 +1,8 @@
 # clj-dstream
 
+[![Build Status](https://travis-ci.org/ogeagla/clj-dstream.png)](https://travis-ci.org/ogeagla/clj-dstream)
+
+
 ## What Is It
 Density-based data stream clustering for arbitrary dimension data written in Clojure.
 
