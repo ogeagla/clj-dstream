@@ -1,7 +1,7 @@
-(ns clj-dstream.crater-test
+(ns og.clj-dstream.crater-test
   (:require [clojure.test :refer :all]
-            [clj-dstream.api :as api]
-            [clj-dstream.core :as core]))
+            [og.clj-dstream.api :as api]
+            [og.clj-dstream.core :as core]))
 
 (def TWO_PI (* 2 (Math/PI)))
 

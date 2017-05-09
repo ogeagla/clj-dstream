@@ -1,8 +1,8 @@
-(ns clj-dstream.api
+(ns og.clj-dstream.api
   (:require
-    [clj-dstream.core :as core]
+    [og.clj-dstream.core :as core]
     [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
-    [clj-dstream.visualize :as visualize]))
+    [og.clj-dstream.visualize :as visualize]))
 
 ;;TODO
 

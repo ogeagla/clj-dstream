@@ -1,5 +1,5 @@
-(ns clj-dstream.test-utils
-  (:require [clj-dstream.core :as core]))
+(ns og.clj-dstream.test-utils
+  (:require [og.clj-dstream.core :as core]))
 
 (defn cluster-count [state]
   (->> state

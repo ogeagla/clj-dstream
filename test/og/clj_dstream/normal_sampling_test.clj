@@ -1,10 +1,10 @@
-(ns clj-dstream.normal-sampling-test
+(ns og.clj-dstream.normal-sampling-test
   (:require [clojure.test :refer :all]
-            [clj-dstream.core :as core]
-            [clj-dstream.test-utils :as test-utils]
+            [og.clj-dstream.core :as core]
+            [og.clj-dstream.test-utils :as test-utils]
             [clojure.core.matrix.random :as random]
-            [clj-dstream.visualize :as visualize]
-            [clj-dstream.api :as api]))
+            [og.clj-dstream.visualize :as visualize]
+            [og.clj-dstream.api :as api]))
 
 (defn time->3-cluster-sample [t time-intervals props]
   (hash-map

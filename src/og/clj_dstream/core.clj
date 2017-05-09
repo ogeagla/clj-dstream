@@ -1,4 +1,4 @@
-(ns clj-dstream.core
+(ns og.clj-dstream.core
   (:gen-class)
   (:require [clojure.spec :as s]
             [clojure.spec.test :as stest]
@@ -84,10 +84,8 @@
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
 
 (defn position-value->position-index [{:keys [::position-value ::phase-space]}]
-  (if-not (= (count position-value) (count phase-space))
-    (do
-      (println position-value phase-space)
-      (throw (ex-info "Dimension mismatch" {:keys :data position-value phase-space}))))
+  (when-not (= (count position-value) (count phase-space))
+    (throw (ex-info "Dimension mismatch" {:keys :data position-value phase-space})))
   (->>
     position-value
     (map-indexed (fn [idx position-val]
@@ -122,7 +120,8 @@
          (::density-at-last-update char-vec)
          (Math/pow lambda
                    (- t
-                      (::last-update-time char-vec)))))))
+                      (or (::last-update-time char-vec)
+                          0.0)))))))
 
 (defn put [{:keys [::raw-datum ::state ::t]}]
   ;(log-it raw-datum ::put-datum raw-datum)
@@ -463,6 +462,8 @@
             (split-cluster new-cluster)))))))
 
 (defn- step-fifteen! [current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor]
+
+  ;;TODO is this correct? i think outer when needs an if, as there is an else case in the paper
   (when
     (and
       (= "NO_CLASS" current-cluster)
@@ -472,16 +473,23 @@
                        (merge
                          (cluster->grid-cells biggest-neighbor @updated-state*)
                          {pos-idx char-vec})))))
-    (when (and (not (= "NO_CLASS" current-cluster))
-               (> (cluster->size current-cluster @updated-state*)
-                  (cluster->size biggest-neighbor @updated-state*)))
-      (update-char-vec-in-state!
-        updated-state*
-        (first grid-w-biggest-neighbor)
-        (assoc
-          (second grid-w-biggest-neighbor)
-          ::cluster
-          current-cluster)))))
+    (update-char-vec-in-state!
+      updated-state*
+      pos-idx
+      (assoc
+        char-vec
+        ::cluster
+        biggest-neighbor)))
+  (when (and (not (= "NO_CLASS" current-cluster))
+             (> (cluster->size current-cluster @updated-state*)
+                (cluster->size biggest-neighbor @updated-state*)))
+    (update-char-vec-in-state!
+      updated-state*
+      (first (keys grid-w-biggest-neighbor))
+      (assoc
+        (first (vals grid-w-biggest-neighbor))
+        ::cluster
+        current-cluster))))
 
 (defn adjust-clustering [state t]
   (log-it [state t] ::adjust-clustering [{:t t}])

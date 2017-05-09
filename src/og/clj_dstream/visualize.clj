@@ -1,4 +1,4 @@
-(ns clj-dstream.visualize
+(ns og.clj-dstream.visualize
   (:require [thi.ng.geom.svg.core :as svg]
             [thi.ng.geom.viz.core :as viz]
             [thi.ng.geom.svg.core :as svg]
@@ -9,7 +9,7 @@
             [thi.ng.color.gradients :as grad]
             [think.tsne.core :as tsne]
             [clojure.core.matrix :as matrix]
-            [clj-dstream.core :as core]
+            [og.clj-dstream.core :as core]
             [me.raynes.fs :as fs]
             [clojure.java.shell :refer [sh]]))
 

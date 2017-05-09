@@ -1,4 +1,4 @@
-(defproject clj-dstream "0.1.0-SNAPSHOT"
+(defproject og/clj-dstream "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -12,7 +12,6 @@
                  [net.mikera/core.matrix "0.58.0"]
                  [com.taoensso/tufte "1.1.1"]
                  [me.raynes/fs "1.4.6"]]
-  :main ^:skip-aot clj-dstream.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
 

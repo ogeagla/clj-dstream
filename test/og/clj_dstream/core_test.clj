@@ -1,7 +1,7 @@
-(ns clj-dstream.core-test
+(ns og.clj-dstream.core-test
   (:require [clojure.test :refer :all]
-            [clj-dstream.core :as core]
-            [clj-dstream.test-utils :as test-utils]))
+            [og.clj-dstream.core :as core]
+            [og.clj-dstream.test-utils :as test-utils]))
 
 (def test-raw-data
   {::core/value          0.1
