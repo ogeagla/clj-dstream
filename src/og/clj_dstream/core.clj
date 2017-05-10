@@ -9,6 +9,8 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
+;;TODO initial clustering never goes more than 2 iterations, could there be a bug in state exchanges?
+;;TODO adjust-clustering every N should either be 1 by defauly (?) or computed dynamically to ensure even eg 20 data points results in some meaningful output
 ;;TODO more than one datum per time slice? 
 ;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
 
@@ -407,14 +409,15 @@
 
 (defn state->clusters [state]
   "For use as external API? What would a user want when they ask for the clusters?"
-  (let [w-grid-cells (into {}
-                           (->>
-                             (::grid-cells state)
-                             (map #(::cluster (second %)))
-                             (remove #(or (nil? %)
-                                          (= "NO_CLASS" %)))
-                             (map (fn [cluster]
-                                    [cluster (cluster->grid-cells cluster state)]))))]
+  (let [clus         (->>
+                       (::grid-cells state)
+                       (map #(::cluster (second %)))
+                       (remove #(or (nil? %)
+                                    (= "NO_CLASS" %)))
+                       (map (fn [cluster]
+                              [cluster (cluster->grid-cells cluster state)])))
+        w-grid-cells (into {}
+                           clus)]
     {:clusters-grid-cells w-grid-cells
      :properties          (::properties state)}))
 
@@ -681,7 +684,7 @@
 (defn dstream-iterations [{:keys [::state]} raw-data & {:keys [state-append-every
                                                                instrument-spec
                                                                data-per-time-interval]
-                                                        :or   {data-per-time-interval 100}}]
+                                                        :or   {data-per-time-interval 1}}]
   (log-it [state raw-data] ::dstream-iterations.starting {:raw-data-count   (count raw-data)
                                                           :state-properties (::properties state)})
   (when instrument-spec
@@ -707,9 +710,10 @@
       (if (= 0 (mod @time* (int (/ (count raw-data) 100))))
         (log-it raw-datum ::put-datum [{:t @time*}
                                        {:cluster-count (count
-                                                         (distinct
-                                                           (map ::cluster
-                                                                (map second (::grid-cells @the-state*)))))
+                                                         (remove #(or (nil? %) (= "NO_CLASS" %))
+                                                                 (distinct
+                                                                   (map ::cluster
+                                                                        (map second (::grid-cells @the-state*))))))
                                         :grid-count    (count (::grid-cells @the-state*))
                                         :N             (::N (::properties @the-state*))}]))
       (let [the-data {::state     @the-state*

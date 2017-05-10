@@ -17,3 +17,19 @@
        (map ::core/label)
        (filter #(= label %))
        count))
+
+
+(def TWO_PI (* 2 (Math/PI)))
+
+(defn sample-ring-2d [r-inner r-outer & {:keys [offsets] :or {offsets [0.0 0.0]}} ]
+  "Random [x y] inside a ring centered
+  about origin with minor/major radii"
+  (let [r     (+ r-inner
+                 (rand (- r-outer r-inner)))
+        theta (rand TWO_PI)
+        x     (* r (Math/cos theta))
+        y     (* r (Math/sin theta))]
+    [(+ x (first offsets)) (+ y (second offsets))]))
+
+(defn sample-circle-2d [r & {:keys [offsets] :or {offsets [0.0 0.0]}}]
+  (sample-ring-2d 0 r :offsets offsets))

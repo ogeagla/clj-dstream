@@ -1,39 +1,27 @@
 (ns og.clj-dstream.crater-test
   (:require [clojure.test :refer :all]
             [og.clj-dstream.api :as api]
-            [og.clj-dstream.core :as core]))
+            [og.clj-dstream.core :as core]
+            [og.clj-dstream.test-utils :as utils]))
 
-(def TWO_PI (* 2 (Math/PI)))
-
-(defn sample-ring [r-inner r-outer]
-  (let [r     (+ r-inner
-                 (rand (- r-outer r-inner)))
-        theta (rand TWO_PI)
-        x     (* r (Math/cos theta))
-        y     (* r (Math/sin theta))]
-    [x y]))
-
-(defn sample-circle [r]
-  (sample-ring 0 r))
-
-(defn sample-crater [circle-r ring-minor-r ring-major-r]
+(defn sample-crater-2d [circle-r ring-minor-r ring-major-r]
   (let [random-thing (rand)]
     (if (>= 0.05 random-thing)
-      (sample-circle circle-r)
-      (sample-ring ring-minor-r ring-major-r))))
+      (utils/sample-circle-2d circle-r)
+      (utils/sample-ring-2d ring-minor-r ring-major-r))))
 
-(defn time->crater-sample [t time-intervals props]
+(defn time->crater-2d-sample [t time-intervals props]
   (let [phase-space  (::core/phase-space props)
         d1           (first phase-space)
         d2           (second phase-space)
         smallest-dim (min (- (::core/domain-end d1) (::core/domain-start d1))
                           (- (::core/domain-end d2) (::core/domain-start d2)))
-        circle-r     (/ smallest-dim 12.0)
-        ring-minor-r (+ circle-r (/ smallest-dim 5.0))
-        ring-major-r (+ ring-minor-r (/ smallest-dim 8.0))]
+        circle-r     (/ smallest-dim 15.0)
+        ring-minor-r (+ circle-r (/ smallest-dim 4.0))
+        ring-major-r (+ ring-minor-r (/ smallest-dim 10.0))]
     (hash-map
       ::core/raw-datum {::core/position-value
-                        (sample-crater circle-r ring-minor-r ring-major-r)}
+                        (sample-crater-2d circle-r ring-minor-r ring-major-r)}
       ::core/value 1.0)))
 
 (deftest stuff
@@ -49,4 +37,4 @@
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
                ::core/gap-time    500}]
-    (api/iterate-with-sampling-and-visualization! time->crater-sample 5000 "crater-sampling" "crater-out" props)))
+    (api/iterate-with-sampling-and-visualization! time->crater-2d-sample 5000 "crater-sampling" "crater-out" props 100)))
