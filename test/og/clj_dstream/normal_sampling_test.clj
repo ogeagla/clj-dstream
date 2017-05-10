@@ -12,8 +12,8 @@
                            ::core/raw-datum
                            {::core/position-value
                                          (let [r (rand)]
-                                           (cond (< percent-complete 0.4) (utils/sample-circle-2d 0.2 :offsets [0.5 0.5])
-                                                 (< percent-complete 0.5) (utils/sample-circle-2d 0.2 :offsets [-0.1 -0.5])
+                                           (cond (< percent-complete 0.6) (utils/sample-circle-2d 0.2 :offsets [0.5 0.5])
+                                                 (< percent-complete 0.7) (utils/sample-circle-2d 0.2 :offsets [-0.1 -0.5])
                                                  :else (utils/sample-circle-2d 0.2 :offsets [-0.2 0.5])))
                             ::core/value 1.0})]
     res))
@@ -30,9 +30,8 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
-                        ::core/gap-time    150}
-        final-state    (api/iterate-with-sampling-and-visualization! time->3-cluster-sample 5000 "normal-sampling" "normal-sample-out" props 50)
+                        ::core/gap-time    200}
+        final-state    (api/iterate-with-sampling-and-visualization! time->3-cluster-sample 10000 "normal-sampling" "normal-sample-out" props 100)
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
     (println "Final clusters: " final-clusters)
-    #_(is (= 1 (count final-clusters)))
-    ))
+    (is (= 1 (count final-clusters)))))
