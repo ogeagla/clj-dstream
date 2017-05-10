@@ -431,7 +431,9 @@
 (defn- step-nine! [current-cluster updated-state* pos-idx biggest-neighbor char-vec]
   (if (= "NO_CLASS" current-cluster)
     ;;step 10
-    (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster biggest-neighbor))
+    (do
+      (log-it pos-idx ::step-nine-true biggest-neighbor)
+      (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster biggest-neighbor)))
     (swap! updated-state* assoc-in [::grid-cells]
            (merge (::grid-cells @updated-state*)
                   (if (> (cluster->size current-cluster @updated-state*)
@@ -576,7 +578,9 @@
                                                    (sort-by :cluster-size)
                                                    last)]
                      (when biggest
-                       (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster (:cluster biggest))))))))))))
+                       (do
+                         (log-it biggest ::transitional-to-neigboring-cluster biggest)
+                         (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster (:cluster biggest)))))))))))))
     @updated-state*))
 
 (defn detect-and-remove-sporadic-grids [state t]

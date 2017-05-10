@@ -57,7 +57,10 @@
                             (if (and (not (= nil cluster))
                                      (not (= "NO_CLASS" cluster)))
                               (do
-                                (::core/density-at-last-update (get grid-cells [r c])))
+                                (/ (float (hash cluster))
+                                   100.0)
+                                ;(::core/density-at-last-update (get grid-cells [r c]))
+                                )
                               (/ (rand) 10000))))
                         (::core/density-at-last-update (get grid-cells [r c]))
                         (/ (rand) 10000))]
