@@ -14,7 +14,7 @@ Sample clustering for time-series data with moving hotspot:
 
 
 [refpaper]: https://github.com/ogeagla/clj-dstream/raw/master/papers/sigproc-sp.pdf
-[clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/moving-stream/animated.gif "Moving Stream"
+[clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/moving-stream/animated-clusters.gif "Moving Stream"
 
 ## Running Tests
 
