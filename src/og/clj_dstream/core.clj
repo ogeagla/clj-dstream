@@ -39,8 +39,8 @@
 (s/def ::domain (s/keys :req [::domain-start ::domain-end ::domain-interval]))
 (s/def ::phase-space (s/coll-of ::domain))
 
-(s/def ::t int?)
-(s/def ::points-per-time-slice int?)
+(s/def ::current-time int?)
+(s/def ::data-count int?)
 
 (s/def ::neighbor-dimension int?)
 
@@ -73,14 +73,18 @@
                                   ::beta
                                   ::dimensions
                                   ::phase-space
-                                  ::gap-time]
+                                  ::gap-time
+                                  ]
                             :opt [::N]))
 
 (s/def ::initialized-clusters boolean?)
 
 (s/def ::state (s/keys :req [::grid-cells
                              ::properties
-                             ::initialized-clusters]))
+                             ::initialized-clusters]
+                       :opt [::current-time
+                             ::data-count]
+                       ))
 
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
 
@@ -124,9 +128,10 @@
                       (or (::last-update-time char-vec)
                           0.0)))))))
 
-(defn put [{:keys [::raw-datum ::state ::t]}]
+(defn put [{:keys [::raw-datum ::state]}]
   ;(log-it raw-datum ::put-datum raw-datum)
-  (let [idx (position-value->position-index (merge raw-datum (::properties state)))]
+  (let [idx (position-value->position-index (merge raw-datum (::properties state)))
+        t   (::current-time state)]
     (if (contains? (::grid-cells state) idx)
       (let [char-vec  (get-in state [::grid-cells idx])
             new-cv    (assoc (update-char-vec-density char-vec t (get-in state [::properties ::lambda]) true)
@@ -153,7 +158,7 @@
                int)))
     (reduce *)))
 
-(defn update-char-vec-label [{:keys [::char-vec ::properties ::t]}]
+(defn update-char-vec-label [{:keys [::char-vec ::properties ::current-time]}]
   (let [{:keys [::N ::c_m ::c_l ::lambda]} properties
         {:keys [::density-at-last-update]} char-vec
         dense-coeff  (/ c_m (* N (- 1.0 lambda)))
@@ -168,7 +173,7 @@
     (if (= (::label char-vec) new-label)
       new-char-vec
       (assoc new-char-vec
-        ::last-time-label-changed t)
+        ::last-time-label-changed current-time)
       )))
 
 (defn are-neighbors_unmemo [position-indices-1 position-indices-2 & [neighbor-dimension]]
@@ -321,7 +326,7 @@
   (p ::update-char-vec-in-state!
      (swap! state* assoc-in [::grid-cells pos-idx] new-char-vec)))
 
-(defn update-grid-cells [state t]
+(defn update-grid-cells [state]
   ;;TODO spec this
   (p ::update-grid-cells
      (let [lambda (get-in state [::properties ::lambda])
@@ -331,9 +336,9 @@
            state*
            pos-idx
            (update-char-vec-label
-             {::char-vec   (update-char-vec-density char-vec t lambda false)
-              ::properties (::properties state)
-              ::t          t})))
+             {::char-vec     (update-char-vec-density char-vec (::current-time state) lambda false)
+              ::properties   (::properties state)
+              ::current-time (::current-time state)})))
        @state*)))
 
 (defn dense-grids->unique-clusters [state]
@@ -358,11 +363,14 @@
                           vals
                           (map ::cluster)
                           (remove nil?)
-                          (remove #(= "NO_CLASS" %)))
+                          (remove #(= "NO_CLASS" %))
+                          distinct)
         the-state*   (atom the-state)]
     (doseq [initial-cluster the-clusters]
+      (log-it initial-cluster ::initial-cluster initial-cluster)
       (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
         (doseq [grid-in-cluster grids-in-cluster]
+          ;(log-it initial-cluster ::grid-in-cluster grid-in-cluster)
           (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster)
                                                       (::grid-cells @the-state*))
                 outside-grids  (filter
@@ -424,7 +432,7 @@
   ;;TODO spec
   (let [init-state (->
                      state
-                     (update-grid-cells t)
+                     (update-grid-cells)
                      dense-grids->unique-clusters)]
     (init-clustering-iterations init-state 1)))
 
@@ -432,6 +440,7 @@
   (if (= "NO_CLASS" current-cluster)
     ;;step 10
     (do
+      ;;TODO how can this biggestneighbor print sometimes show nil?
       (log-it pos-idx ::step-nine-true biggest-neighbor)
       (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster biggest-neighbor)))
     (swap! updated-state* assoc-in [::grid-cells]
@@ -499,7 +508,7 @@
 
 (defn adjust-clustering [state t]
   (log-it [state t] ::adjust-clustering [{:t t}])
-  (let [updated-state* (atom (update-grid-cells state t))]
+  (let [updated-state* (atom (update-grid-cells state))]
     (doseq [[pos-idx char-vec] (::grid-cells @updated-state*)]
       ;(log-it pos-idx ::adjust-clustering-for-char-vec [{:t t} char-vec])
       (when (= t (::last-time-label-changed char-vec))
@@ -519,7 +528,9 @@
                                                                            vals
                                                                            (map ::cluster)
                                                                            (remove nil?)
+                                                                           (remove #(= "NO_CLASS" %))
                                                                            not-empty)]
+                                                  (log-it pos-idx ::step-seven.neighbors.cluster.count (count neighbors-clusters))
                                                   (when neighbors-clusters
                                                     (let [biggest-neighbor        (->>
                                                                                     neighbors-clusters
@@ -608,23 +619,25 @@
     (log-it properties ::gap-time gap-time)
     gap-time))
 
-(defn one-dstream-update [{:keys [::state ::raw-datum ::t] :as data}]
-  (let [state*   (atom state)
-        gap-time (::gap-time (::properties state))]
-    (when (= gap-time t)
-      (reset! state* (p ::initial-clustering (initial-clustering @state* t))))
-    (when (= 0 (mod t gap-time))
-      (reset! state* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state* t)))
-      (reset! state* (p ::adjust-clustering (adjust-clustering @state* t))))
-    @state*))
+(defn one-dstream-update [{:keys [::state]}]
+  (p ::one-dstream-iteration
+     (let [state*   (atom state)
+           t        (::current-time state)
+           gap-time (::gap-time (::properties state))]
+       (when (= gap-time t)
+         (reset! state* (p ::initial-clustering (initial-clustering @state* t))))
+       (when (= 0 (mod t gap-time))
+         (reset! state* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state* t)))
+         (reset! state* (p ::adjust-clustering (adjust-clustering @state* t))))
+       @state*)))
 
 (s/fdef initial-clustering
-        :args (s/cat :u ::state :v ::t)
+        :args (s/cat :u ::state :v ::current-time)
         :ret ::state)
 
 (s/fdef update-char-vec-density
         :args (s/cat :u ::char-vec
-                     :v ::t
+                     :v ::current-time
                      :t ::lambda
                      :w boolean?)
         :ret ::char-vec)
@@ -650,25 +663,19 @@
         :ret boolean?)
 
 (s/fdef one-dstream-update
-        :args (s/cat :u (s/keys :req [::state ::raw-datum]))
+        :args (s/cat :u (s/keys :req [::state]))
         :ret (s/keys :req [::state]))
 
 (s/fdef put
-        :args (s/cat :u (s/keys :req [::state ::raw-datum ::t]))
+        :args (s/cat :u (s/keys :req [::state ::raw-datum]))
         :ret (s/keys :req [::state]))
 
 (s/fdef position-value->position-index
         :args (s/cat :u (s/keys :req [::position-value ::phase-space]))
         :ret ::position-index)
 
-(s/fdef dstream-iterations
-        :args (s/cat :u (s/cat
-                          :state (s/keys :req [::state])
-                          :raw-data (s/coll-of (s/keys :req [::raw-datum]))))
-        :ret (s/keys :req [::state]))
-
 (s/fdef update-char-vec-label
-        :args (s/cat :u (s/keys :req [::char-vec ::properties ::t]))
+        :args (s/cat :u (s/keys :req [::char-vec ::properties ::current-time]))
         :ret (s/keys :req [::char-vec]))
 
 (s/fdef phase-space->cell-count
@@ -679,7 +686,6 @@
   (stest/instrument `one-dstream-update)
   (stest/instrument `position-value->position-index)
   (stest/instrument `put)
-  (stest/instrument `dstream-iterations)
   (stest/instrument `update-char-vec-label)
   (stest/instrument `phase-space->cell-count)
   ;;TODO make this spec work
@@ -692,51 +698,44 @@
 
 (instrument-specs!)
 
-(defn dstream-iterations [{:keys [::state]} raw-data & {:keys [state-append-every
-                                                               instrument-spec
-                                                               data-per-time-interval]
-                                                        :or   {data-per-time-interval 1}}]
-  (log-it [state raw-data] ::dstream-iterations.starting {:raw-data-count   (count raw-data)
-                                                          :state-properties (::properties state)})
-  (when instrument-spec
+(defn init-state [state*]
+  (if-not (get-in @state* [::data-count])
+    (do
+      (swap! state* assoc-in
+             [::data-count]
+             0)))
+  (if-not (get-in @state* [::current-time])
+    (do
+      (swap! state* assoc-in
+             [::current-time]
+             0)))
+  (if-not (get-in @state* [::properties ::N])
+    (do
+      (swap! state* assoc-in
+             [::properties ::N]
+             (phase-space->cell-count
+               (get-in @state* [::properties])))))
+
+  (if-not (get-in @state* [::properties ::gap-time])
+    (do
+      (swap! state* assoc-in
+             [::properties ::gap-time]
+             (properties->gap-time (::properties @state*))))))
+
+(defn put-data-for-next-time-step [state raw-data & {:keys [inst-spec]
+                                                     :or   {inst-spec true}}]
+  (log-it [state raw-data] ::put-data-for-next-time-step {:t          (::current-time state)
+                                                          :data-count (count raw-data)})
+
+  (when inst-spec
     (instrument-specs!))
-  (let [time*           (atom 0)
-        the-state*      (atom state)
-        state-appender* (atom {})]
-    (if-not (get-in state [::properties ::N])
-      (do
-        (swap! the-state* assoc-in
-               [::properties ::N]
-               (phase-space->cell-count
-                 (get-in @the-state* [::properties])))))
-    (if-not (get-in state [::properties ::gap-time])
-      (do
-        (swap! the-state* assoc-in
-               [::properties ::gap-time]
-               (properties->gap-time (::properties @the-state*)))))
+
+  (let [the-state* (atom state)]
+    (init-state the-state*)
     (doseq [{:keys [::raw-datum]} raw-data]
-      (if (and state-append-every
-               (= 0 (mod @time* state-append-every)))
-        (swap! state-appender* assoc @time* @the-state*))
-      (if (= 0 (mod @time* (int (/ (count raw-data) 100))))
-        (log-it raw-datum ::put-datum [{:t @time*}
-                                       {:cluster-count (count
-                                                         (remove #(or (nil? %) (= "NO_CLASS" %))
-                                                                 (distinct
-                                                                   (map ::cluster
-                                                                        (map second (::grid-cells @the-state*))))))
-                                        :grid-count    (count (::grid-cells @the-state*))
-                                        :N             (::N (::properties @the-state*))}]))
-      (let [the-data {::state     @the-state*
-                      ::raw-datum raw-datum
-                      ::t         @time*}]
-        (reset! the-state* (put the-data))
-        (if (= 0 (mod @time* data-per-time-interval))
-          (do
-            (reset! the-state*
-                    (p ::one-dstream-iteration
-                       (one-dstream-update the-data))))))
-      (swap! time* inc))
-    {:final-state   @the-state*
-     :initial-state state
-     :state-ts      @state-appender*}))
+      (reset! the-state* (put {::raw-datum raw-datum
+                               ::state     @the-state*}))
+      (swap! the-state* assoc-in [::data-count] (inc (::data-count @the-state*))))
+    (swap! the-state* assoc-in [::current-time] (inc (::current-time @the-state*)))
+    (reset! the-state* (one-dstream-update {::state @the-state*}))
+    @the-state*))

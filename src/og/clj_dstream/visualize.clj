@@ -74,7 +74,7 @@
 (defn animate-results [glob output]
   (println "Creating animated gif from files, to file: " glob " -> " output)
   (try
-    (sh "convert" "-delay" "35" "-loop" "0" glob output)
+    (sh "convert" "-delay" "25" "-loop" "0" glob output)
     (catch Throwable t
       (println "Could not create animated gif:" t))))
 
