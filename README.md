@@ -10,11 +10,11 @@ Reference [paper][refpaper].
 
 
 Sample clustering for time-series data with moving hotspot:
-![Three Clusters GIF][clustergif]
+![Moving Stream GIF][clustergif]
 
 
 [refpaper]: https://github.com/ogeagla/clj-dstream/raw/master/papers/sigproc-sp.pdf
-[clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/3-clusters-1-at-a-time/animated-loop.gif "Three Clusters One At A Time"
+[clustergif]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/moving-stream/animated.gif "Moving Stream"
 
 ## Running Tests
 
