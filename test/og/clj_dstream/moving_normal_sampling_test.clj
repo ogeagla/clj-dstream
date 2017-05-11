@@ -1,4 +1,4 @@
-(ns og.clj-dstream.moving-sampling-test
+(ns og.clj-dstream.moving-normal-sampling-test
   (:require [clojure.test :refer :all]
             [og.clj-dstream.core :as core]
             [og.clj-dstream.test-utils :as utils]
@@ -33,11 +33,13 @@
                         ::core/gap-time    5}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->3-cluster-sample
-                          :time-intervals         400
+                          :time-intervals         500
                           :out-name               "moving-normal-sampling"
                           :out-dir                "moving-normal-out"
                           :props                  props
-                          :data-per-time-interval 30})
+                          :data-per-time-interval 60
+                          :disable-logging        true
+                          })
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
     (is (= 1 (count final-clusters)))))

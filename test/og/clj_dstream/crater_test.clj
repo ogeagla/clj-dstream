@@ -44,4 +44,5 @@
        :out-name               "crater-sampling"
        :out-dir                "crater-out"
        :props                  props
-       :data-per-time-interval 1000})))
+       :data-per-time-interval 1000
+       :disable-logging        true})))

@@ -41,7 +41,8 @@
                           :out-name               "normal-sampling"
                           :out-dir                "normal-out"
                           :props                  props
-                          :data-per-time-interval 100})
+                          :data-per-time-interval 100
+                          :disable-logging true})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
     (is (= 1 (count final-clusters)))))
