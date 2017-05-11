@@ -21,8 +21,8 @@
         ring-major-r (+ ring-minor-r (/ smallest-dim 10.0))]
     (hash-map
       ::core/raw-datum {::core/position-value
-                        (sample-crater-2d circle-r ring-minor-r ring-major-r)}
-      ::core/value 1.0)))
+                        (sample-crater-2d circle-r ring-minor-r ring-major-r)
+                        ::core/value 1.0})))
 
 (deftest stuff
   (let [props {::core/c_m         3.0
@@ -36,5 +36,5 @@
                                    {::core/domain-start    -1.0
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
-               ::core/gap-time    500}]
+               ::core/gap-time    200}]
     (api/iterate-with-sampling-and-visualization! time->crater-2d-sample 5000 "crater-sampling" "crater-out" props 100)))

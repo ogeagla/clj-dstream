@@ -473,7 +473,7 @@
     (and
       (= "NO_CLASS" current-cluster)
       (= ::outside (pos-is-inside-or-outside-group
-                     (first grid-w-biggest-neighbor)
+                     (first (keys grid-w-biggest-neighbor))
                      (keys
                        (merge
                          (cluster->grid-cells biggest-neighbor @updated-state*)
