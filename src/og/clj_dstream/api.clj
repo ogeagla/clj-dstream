@@ -47,18 +47,23 @@
                                               (::core/current-time @the-state*)
                                               plot-every-nth))
                                      (do
-                                       (core/log-it (::core/current-time @the-state*)
-                                                    ::log-state-periodically
-                                                    {:cluster-count
-                                                                 (count
-                                                                   (remove #(or (nil? %) (= "NO_CLASS" %))
-                                                                           (distinct
-                                                                             (map ::core/cluster
-                                                                                  (map
-                                                                                    second
-                                                                                    (::core/grid-cells @the-state*))))))
-                                                     :grid-count (count (::core/grid-cells @the-state*))
-                                                     :N          (::core/N (::core/properties @the-state*))})
+                                       (let [clusters (remove #(or (nil? %) (= "NO_CLASS" %))
+                                                              (distinct
+                                                                (map ::core/cluster
+                                                                     (map
+                                                                       second
+                                                                       (::core/grid-cells @the-state*)))))]
+                                         (core/log-it (::core/current-time @the-state*)
+                                                      ::log-state-periodically
+                                                      {:cluster-count
+                                                                      (count
+                                                                        clusters)
+                                                       :cluster-sizes (into {}
+                                                                            (map (fn [c]
+                                                                                   [c (core/cluster->size c @the-state*)])
+                                                                                 clusters))
+                                                       :grid-count    (count (::core/grid-cells @the-state*))
+                                                       :N             (::core/N (::core/properties @the-state*))}))
                                        (swap! state-appender*
                                               assoc
                                               (::core/current-time @the-state*)

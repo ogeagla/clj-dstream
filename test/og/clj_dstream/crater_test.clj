@@ -6,7 +6,7 @@
 
 (defn sample-crater-2d [circle-r ring-minor-r ring-major-r]
   (let [random-thing (rand)]
-    (if (>= 0.07 random-thing)
+    (if (>= 0.08 random-thing)
       (utils/sample-circle-2d circle-r)
       (utils/sample-ring-2d ring-minor-r ring-major-r))))
 
@@ -17,8 +17,8 @@
         smallest-dim (min (- (::core/domain-end d1) (::core/domain-start d1))
                           (- (::core/domain-end d2) (::core/domain-start d2)))
         circle-r     (/ smallest-dim 12.0)
-        ring-minor-r (+ circle-r (/ smallest-dim 4.0))
-        ring-major-r (+ ring-minor-r (/ smallest-dim 12.0))]
+        ring-minor-r (+ circle-r (/ smallest-dim 5.0))
+        ring-major-r (+ ring-minor-r (/ smallest-dim 15.0))]
     (hash-map
       ::core/raw-datum {::core/position-value
                                      (sample-crater-2d circle-r ring-minor-r ring-major-r)
@@ -32,7 +32,7 @@
                ::core/dimensions  2
                ::core/phase-space [{::core/domain-start    -1.0
                                     ::core/domain-end      1.0
-                                    ::core/domain-interval 0.1}
+                                    ::core/domain-interval 0.05}
                                    {::core/domain-start    -1.0
                                     ::core/domain-end      1.0
                                     ::core/domain-interval 0.1}]
@@ -40,7 +40,7 @@
 
     (api/sample-next-data
       {:sampling-fn            time->crater-2d-sample
-       :time-intervals         30
+       :time-intervals         20
        :out-name               "crater-sampling"
        :out-dir                "crater-out"
        :props                  props

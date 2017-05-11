@@ -11,11 +11,14 @@
         res              (hash-map
                            ::core/raw-datum
                            {::core/position-value
-                                         (let [r (rand)]
+                                         (let [size 0.4]
                                            (cond
-                                             (< percent-complete 0.2) (utils/sample-circle-2d 0.2 :offsets [0.5 0.5])
-                                             (< percent-complete 0.5) (utils/sample-circle-2d 0.2 :offsets [0.3 0.4])
-                                             :else (utils/sample-circle-2d 0.2 :offsets [0.3 0.2])))
+                                             (< percent-complete 0.1) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             (< percent-complete 0.3) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             (< percent-complete 0.4) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             (< percent-complete 0.5) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             :else (utils/sample-circle-2d size :offsets [0.2 0.2])))
                             ::core/value 1.0})]
     res))
 (deftest normal-dataset
@@ -27,7 +30,7 @@
                         ::core/phase-space [
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
-                                             ::core/domain-interval 0.1}
+                                             ::core/domain-interval 0.05}
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
@@ -38,9 +41,7 @@
                           :out-name               "normal-sampling"
                           :out-dir                "normal-out"
                           :props                  props
-                          :data-per-time-interval 1000})
+                          :data-per-time-interval 100})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    (println "Final clusters: " final-clusters)
-    #_(is (= 1 (count final-clusters)))
-    ))
+    (is (= 1 (count final-clusters)))))

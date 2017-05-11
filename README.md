@@ -31,11 +31,11 @@ In addition to the unit tests, the additional 'real-world data' tests will gener
 When faced with data shapes like a crater, which can look like so:
 ![Crater Grids SVG][cratergrids]
 
-Many clustering algorithms would combine these clusters into one, but DStream results look better:
+Clustering results, where each cluster has a distinct color:
 ![Crater Clusters GIF][craterclusters]
 
-[craterclusters]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/animated-clusters-loop.gif "Crater Clusters"
-[cratergrids]: https://cdn.rawgit.com/ogeagla/clj-dstream/master/doc/resources/crater/grids-crater-sampling-000000400-rainbow2.svg "Crater Data Stream"
+[craterclusters]: https://github.com/ogeagla/clj-dstream/raw/master/doc/resources/crater/animated-clusters.gif "Crater Clusters"
+[cratergrids]: https://cdn.rawgit.com/ogeagla/clj-dstream/master/doc/resources/crater/grids-crater-sampling-000000001-orange-blue.svg "Crater Data Stream"
 
 
 ## License

@@ -44,11 +44,19 @@
        (spit (str prefix "-" (name id) ".svg"))))
 
 (defn grids-2d->heatmap-vec [grid-cells props & {:keys [clusters-only]}]
-  (let [phase-space (::core/phase-space props)
-        d1          (first phase-space)
-        d2          (second phase-space)
-        rows        (int (/ (- (::core/domain-end d1) (::core/domain-start d1)) (::core/domain-interval d1)))
-        cols        (int (/ (- (::core/domain-end d2) (::core/domain-start d2)) (::core/domain-interval d2)))]
+  (let [phase-space     (::core/phase-space props)
+        d1              (first phase-space)
+        d2              (second phase-space)
+        rows            (int (/ (- (::core/domain-end d1) (::core/domain-start d1)) (::core/domain-interval d1)))
+        cols            (int (/ (- (::core/domain-end d2) (::core/domain-start d2)) (::core/domain-interval d2)))
+        clusters        (distinct
+                          (remove #(or (= nil %)
+                                       (= "NO_CLASS" %))
+                                  (map ::core/cluster (vals grid-cells))))
+        clusters-colors (into {}
+                              (map (fn [c]
+                                     [c (rand 100.0)]
+                                     ) clusters))]
     (let [vecs
           (for [c (range cols) r (range rows)]
             (let [num (or
@@ -57,13 +65,10 @@
                             (if (and (not (= nil cluster))
                                      (not (= "NO_CLASS" cluster)))
                               (do
-                                (/ (float (hash cluster))
-                                   10.0)
-                                ;(::core/density-at-last-update (get grid-cells [r c]))
-                                )
-                              (/ (rand) 10000))))
+                                (get clusters-colors cluster))
+                              (/ (rand) 1000))))
                         (::core/density-at-last-update (get grid-cells [r c]))
-                        (/ (rand) 10000))]
+                        (/ (rand) 1000))]
               num))]
       {:matrix (->>
                  vecs
@@ -85,8 +90,8 @@
     (let [hm1 (grids-2d->heatmap-vec grid-cells props)
           hm2 (grids-2d->heatmap-vec grid-cells props :clusters-only true)]
 
-      (cartesian-viz (str dir "/grids-" name) :rainbow2 (:matrix hm1) (:cols hm1) (:rows hm1))
-      (cartesian-viz (str dir "/clusters-" name) :rainbow2 (:matrix hm2) (:cols hm2) (:rows hm2)))
+      (cartesian-viz (str dir "/grids-" name) :orange-blue (:matrix hm1) (:cols hm1) (:rows hm1))
+      (cartesian-viz (str dir "/clusters-" name) :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
     (do
       (throw (ex-info "Unsupported dimensionality" props))
       (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]

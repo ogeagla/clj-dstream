@@ -83,8 +83,7 @@
                              ::properties
                              ::initialized-clusters]
                        :opt [::current-time
-                             ::data-count]
-                       ))
+                             ::data-count]))
 
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
 
@@ -227,13 +226,15 @@
 (defn pos-is-inside-or-outside-group [grid-pos group-poss]
   (p ::pos-is-inside-or-outside-group
      (let [group-minus-grid (remove #(= grid-pos %) group-poss)
-           truth-per-dim    (map-indexed
-                              (fn [idx pos-at-idx]
-                                (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
-                                                                    (are-neighbors grid-pos grid-from-group idx))
-                                                                  group-minus-grid)]
-                                  (some true? neighbors-in-this-dim)))
-                              grid-pos)
+           truth-per-dim    (doall (map-indexed
+                                     (fn [idx pos-at-idx]
+                                       (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
+                                                                          (let [are-they? (are-neighbors grid-pos grid-from-group idx)]
+                                                                            are-they?))
+                                                                        group-minus-grid)]
+                                         (or (some true? neighbors-in-this-dim)
+                                             false)))
+                                     grid-pos))
            is-inside        (every? true? truth-per-dim)]
        (if is-inside
          ::inside
@@ -299,7 +300,7 @@
                                         (select-keys grid-cells idxs))
                                       connecteds)
            w-new-clusters        (flatten
-                                   (map
+                                   (pmap
                                      (fn [the-conn-grid-cells]
                                        (if (is-grid-group (keys the-conn-grid-cells))
                                          (let [id (str (java.util.UUID/randomUUID))]
@@ -351,26 +352,25 @@
                  [::grid-cells pos-idx ::cluster]
                  (str (java.util.UUID/randomUUID))))
         (do
-          ;(log-it state ::not-dense-grid {:char-vec char-vec})
+          (log-it state ::not-dense-grid {:char-vec char-vec})
           (swap! state* assoc-in
                  [::grid-cells pos-idx ::cluster]
                  "NO_CLASS"))))
     @state*))
 
-(defn- initial-clustering-single-pass [the-state]
-  (let [the-clusters (->> the-state
+(defn- initial-clustering-single-pass [the-state*]
+  (let [the-clusters (->> @the-state*
                           ::grid-cells
                           vals
                           (map ::cluster)
                           (remove nil?)
                           (remove #(= "NO_CLASS" %))
-                          distinct)
-        the-state*   (atom the-state)]
+                          distinct)]
     (doseq [initial-cluster the-clusters]
       (log-it initial-cluster ::initial-cluster initial-cluster)
       (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
         (doseq [grid-in-cluster grids-in-cluster]
-          ;(log-it initial-cluster ::grid-in-cluster grid-in-cluster)
+          (log-it initial-cluster ::grid-in-cluster grid-in-cluster)
           (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster)
                                                       (::grid-cells @the-state*))
                 outside-grids  (filter
@@ -378,7 +378,8 @@
                                    (= ::outside
                                       (pos-is-inside-or-outside-group pos-idx
                                                                       (keys its-grid-group))))
-                                 its-grid-group)]
+                                 its-grid-group)
+                ]
             (doseq [outside-grid outside-grids]
               (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid)
                                                     (::grid-cells @the-state*))]
@@ -389,30 +390,35 @@
                     ;;if neighbor belongs to a cluster
                     (if (< 0 neighbor-cluster-size)
                       (if (> initial-cluster-size neighbor-cluster-size)
-                        (swap! the-state* assoc-in [::grid-cells]
-                               (merge (::grid-cells @the-state*)
-                                      (relabel-cluster neighbor-cluster initial-cluster @the-state*)))
-                        (swap! the-state* assoc-in [::grid-cells]
-                               (merge (::grid-cells @the-state*)
-                                      (relabel-cluster initial-cluster neighbor-cluster @the-state*))))
+                        (do
+                          (swap! the-state* assoc-in [::grid-cells]
+                                 (merge (::grid-cells @the-state*)
+                                        (relabel-cluster neighbor-cluster initial-cluster @the-state*))))
+                        (do
+                          (swap! the-state* assoc-in [::grid-cells]
+                                 (merge (::grid-cells @the-state*)
+                                        (relabel-cluster initial-cluster neighbor-cluster @the-state*)))))
                       ;;elif neighbor does not have a cluster
                       (when (= ::transitional (::label (second neighbor)))
-                        (swap! the-state* assoc-in [::grid-cells]
-                               (merge (::grid-cells @the-state*)
-                                      {(first neighbor)
-                                       (assoc (second neighbor) ::cluster initial-cluster)}))))))))))))
+                        (do
+
+                          (swap! the-state* assoc-in [::grid-cells]
+                                 (merge (::grid-cells @the-state*)
+                                        {(first neighbor)
+                                         (assoc (second neighbor) ::cluster initial-cluster)})))))))))))))
     @the-state*))
 
-(defn- init-clustering-iterations [state iter-count]
-  (log-it state ::init-clustering {:iteration iter-count})
-  (let [state-after (initial-clustering-single-pass state)]
-    (if (= state state-after)
+(defn- init-clustering-iterations [state* iter-count]
+  (log-it @state* ::init-clustering {:iteration iter-count})
+  (let [state-before @state*]
+    (initial-clustering-single-pass state*)
+    (if (= @state* state-before)
       (do
-        (log-it state-after ::init-clustering.complete {:iterations iter-count})
-        state-after)
+        (log-it @state* ::init-clustering.complete {:iterations iter-count})
+        @state*)
       (do
-        (log-it state-after ::init-clustering.recurring {:iterations iter-count})
-        (recur state-after (inc iter-count))))))
+        (log-it @state* ::init-clustering.recurring {:iterations iter-count})
+        (recur state* (inc iter-count))))))
 
 (defn state->clusters [state]
   "For use as external API? What would a user want when they ask for the clusters?"
@@ -428,13 +434,13 @@
     {:clusters-grid-cells w-grid-cells
      :properties          (::properties state)}))
 
-(defn initial-clustering [state t]
+(defn initial-clustering [state* t]
   ;;TODO spec
-  (let [init-state (->
-                     state
-                     (update-grid-cells)
-                     dense-grids->unique-clusters)]
-    (init-clustering-iterations init-state 1)))
+  (let [init-state* (atom (->
+                            @state*
+                            (update-grid-cells)
+                            dense-grids->unique-clusters))]
+    (init-clustering-iterations init-state* 1)))
 
 (defn- step-nine! [current-cluster updated-state* pos-idx biggest-neighbor char-vec]
   (if (= "NO_CLASS" current-cluster)
@@ -625,7 +631,10 @@
            t        (::current-time state)
            gap-time (::gap-time (::properties state))]
        (when (= gap-time t)
-         (reset! state* (p ::initial-clustering (initial-clustering @state* t))))
+         (do (p ::initial-clustering (reset! state* (initial-clustering state* t)))
+             #_(Thread/sleep 99999999)
+             ))
+
        (when (= 0 (mod t gap-time))
          (reset! state* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state* t)))
          (reset! state* (p ::adjust-clustering (adjust-clustering @state* t))))
@@ -693,7 +702,7 @@
   (stest/instrument `is-grid-group)
   (stest/instrument `pos-is-inside-or-outside-group)
   (stest/instrument `is-grid-cluster)
-  (stest/instrument `initial-clustering)
+  ;(stest/instrument `initial-clustering)
   (stest/instrument `update-char-vec-density))
 
 (instrument-specs!)
@@ -724,8 +733,8 @@
 
 (defn put-data-for-next-time-step [state raw-data & {:keys [inst-spec]
                                                      :or   {inst-spec true}}]
-  (log-it [state raw-data] ::put-data-for-next-time-step {:t          (::current-time state)
-                                                          :data-count (count raw-data)})
+  #_(log-it [state raw-data] ::put-data-for-next-time-step {:t          (::current-time state)
+                                                            :data-count (count raw-data)})
 
   (when inst-spec
     (instrument-specs!))
