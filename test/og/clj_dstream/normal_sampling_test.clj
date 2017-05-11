@@ -30,8 +30,8 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
-                        ::core/gap-time    200}
-        final-state    (api/iterate-with-sampling-and-visualization! time->3-cluster-sample 10000 "normal-sampling" "normal-sample-out" props 100)
+                        ::core/gap-time    50}
+        final-state    (api/iterate-with-sampling-and-visualization! time->3-cluster-sample 10000 "normal-sampling" "normal-sample-out" props 10)
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
     (println "Final clusters: " final-clusters)
     (is (= 1 (count final-clusters)))))
