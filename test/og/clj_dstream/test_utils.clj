@@ -33,3 +33,8 @@
 
 (defn sample-circle-2d [r & {:keys [offsets] :or {offsets [0.0 0.0]}}]
   (sample-ring-2d 0 r :offsets offsets))
+
+(defn sample-rect-2d [w h & {:keys [offsets] :or {offsets [0.0 0.0]}}]
+  (let [rand-x (+ (first offsets) (rand w))
+        rand-y (+ (second offsets) (rand h))]
+    [rand-x rand-y]))
