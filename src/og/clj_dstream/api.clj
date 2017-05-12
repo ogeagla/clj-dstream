@@ -9,6 +9,15 @@
   "Get cilantro"
   (core/state->clusters state))
 
+(defn predict-cluster-or-outlier [raw-datum state]
+  "For a state (trained) and a raw datum,
+  get the cluster the data would belong to or nil,
+  where nil means the datum is an outlier of the model"
+  (let [idx (core/position-value->position-index (merge raw-datum (::core/properties state)))
+        grid-cells (::core/grid-cells state)]
+    (when (contains?  grid-cells idx)
+      (::core/cluster (get grid-cells idx)))))
+
 (defn put-next-data [state data]
   "Take a seq of raw data representing the next time step
    and updates the state accordingly; returns updated state"
