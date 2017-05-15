@@ -1,7 +1,6 @@
 (ns og.clj-dstream.core
-  (:gen-class)
-  (:require [clojure.spec :as s]
-            [clojure.spec.test :as stest]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [loom.graph :as lgraph]
             [loom.alg :as lalg]
             [loom.graph :as g]
