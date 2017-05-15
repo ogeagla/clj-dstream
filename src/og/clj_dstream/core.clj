@@ -87,6 +87,26 @@
 
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
 
+(defn position-index->position-value [pos-idx phase-space]
+  (when-not (= (count pos-idx) (count phase-space))
+    (throw (ex-info "Dimension mismatch" {:keys :data pos-idx phase-space})))
+
+  (->>
+    pos-idx
+    (map-indexed (fn [idx pos-idx]
+
+                   (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)
+                         ]
+
+                     (+ domain-start (* pos-idx domain-interval ))
+
+                     )
+
+                   )))
+
+
+  )
+
 (defn position-value->position-index [{:keys [::position-value ::phase-space]}]
   (when-not (= (count position-value) (count phase-space))
     (throw (ex-info "Dimension mismatch" {:keys :data position-value phase-space})))

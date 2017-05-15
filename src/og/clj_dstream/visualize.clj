@@ -14,6 +14,57 @@
             [clojure.java.shell :refer [sh]]))
 
 
+(defn export-scatter-viz
+  [data spec path]
+  (->>
+    data
+    spec
+    (viz/svg-plot2d-cartesian)
+    (svg/svg {:width 600 :height 600})
+    (svg/serialize)
+    (spit path)))
+
+(defn scatter-spec [data]
+  {:x-axis (viz/linear-axis
+             {:domain      [-100.0 100.0]
+              :range       [550 20]
+              :major       10
+              :minor       5
+              :pos         50
+              :label-dist  15
+              :label-style {:text-anchor "end"}})
+   :y-axis (viz/linear-axis
+             {:domain      [-100.0 100.0]
+              :range       [550 20]
+              :major       10
+              :minor       5
+              :pos         50
+              :label-dist  15
+              :label-style {:text-anchor "end"}})
+   :grid   {:attribs {:stroke "#caa"}
+            :minor-x true
+            :minor-y true}
+   :data   [
+            {:values  data
+             :attribs {:fill "#0af" :stroke "none"}
+             :layout  viz/svg-scatter-plot}
+            ;{:values  (map (juxt identity #(m/random %)) (range 0 200 2))
+            ; :attribs {:fill "none" :stroke "#f60"}
+            ; :shape   (viz/svg-triangle-down 6)
+            ; :layout  viz/svg-scatter-plot}
+            ]
+   })
+
+;(export-viz spec "scatter-linear.svg")
+;
+;(-> spec
+;    (export-viz "scatter-log.svg"))
+;
+;
+;
+;
+
+
 (defn heatmap-spec
   [id the-matrix]
   {:matrix        the-matrix
@@ -93,14 +144,28 @@
       (cartesian-viz (str dir "/grids-" name) :orange-blue (:matrix hm1) (:cols hm1) (:rows hm1))
       (cartesian-viz (str dir "/clusters-" name) :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
     (do
-      (throw (ex-info "Unsupported dimensionality" props))
-      (let [cluster-positions (remove nil? (map (fn [[pos-idx char-vec]]
-                                                  (let [cluster (::core/cluster char-vec)]
-                                                    (if-not (or (= nil cluster)
-                                                                (= "NO_CLASS" cluster))
-                                                      pos-idx)))
-                                                grid-cells))
-            input-matrix      (matrix/array :vectorz cluster-positions)
-            algo-name         :parallel-bht
-            output-map        {algo-name (tsne/tsne input-matrix 2 :tsne-algorithm algo-name :perplexity 0.01)}]
-        output-map))))
+      ;      (throw (ex-info "Unsupported dimensionality" props))
+      (let [cluster-positions (into {} (remove nil? (map-indexed (fn [idx [pos-idx char-vec]]
+                                                                   (let [cluster (::core/cluster char-vec)]
+                                                                     (if-not (or (= nil cluster)
+                                                                                 (= "NO_CLASS" cluster))
+                                                                       [(core/position-index->position-value pos-idx (::core/phase-space props))
+                                                                        {:cluster cluster
+                                                                         :idx     idx}])))
+                                                                 grid-cells)))
+            _                 (println "cluster poss: " (count cluster-positions))
+            algo-name         :parallel-bht]
+        (when (< 0 (count cluster-positions))
+          (let [tsne-output (tsne/tsne
+                              (matrix/array :vectorz (keys cluster-positions))
+                              2
+                              :tsne-algorithm algo-name
+                              ;:perplexity 0.01
+                              )
+
+                ]
+            (export-scatter-viz tsne-output scatter-spec  (str dir "/clusters-" name ".svg") )
+            )
+
+          )
+        ))))

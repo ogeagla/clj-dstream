@@ -30,18 +30,18 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
-                        ::core/gap-time    5}
+                        ::core/gap-time    10}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->3-cluster-sample
-                          :time-intervals         500
+                          :time-intervals         1500
                           :out-name               "moving-normal-sampling"
                           :out-dir                "moving-normal-out"
                           :props                  props
-                          :data-per-time-interval 60
+                          :data-per-time-interval 80
                           :disable-logging        true
                           })
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
     ;;TODO re-enable this with params which pass
-    #_(is (= 1 (count final-clusters)))
+    (is (= 1 (count final-clusters)))
     ))

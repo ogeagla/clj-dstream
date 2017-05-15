@@ -21,7 +21,7 @@
 
 (def TWO_PI (* 2 (Math/PI)))
 
-(defn sample-ring-2d [r-inner r-outer & {:keys [offsets] :or {offsets [0.0 0.0]}} ]
+(defn sample-ring-2d [r-inner r-outer & {:keys [offsets] :or {offsets [0.0 0.0]}}]
   "Random [x y] inside a ring centered
   about origin with minor/major radii"
   (let [r     (+ r-inner
@@ -38,3 +38,13 @@
   (let [rand-x (+ (first offsets) (rand w))
         rand-y (+ (second offsets) (rand h))]
     [rand-x rand-y]))
+
+(defn sample-rect [sizes offsets]
+  (let [stuff (vec (map-indexed (fn [idx offset]
+                                  (+ offset
+                                     (rand (get sizes idx))))
+                                offsets))]
+
+    stuff)
+
+  )

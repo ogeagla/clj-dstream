@@ -82,7 +82,7 @@
         sorted-stats    (take 5 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))
         displayable     (visualize/display-state
                           out-dir
-                          (str out-name "-final-")
+                          (str out-name "-final")
                           props
                           (::core/grid-cells final-state))]
 
