@@ -66,14 +66,15 @@
                                          (core/log-it (::core/current-time @the-state*)
                                                       ::log-state-periodically
                                                       {:cluster-count
-                                                                      (count
-                                                                        clusters)
-                                                       :cluster-sizes (into {}
-                                                                            (map (fn [c]
-                                                                                   [c (core/cluster->size c @the-state*)])
-                                                                                 clusters))
-                                                       :grid-count    (count (::core/grid-cells @the-state*))
-                                                       :N             (::core/N (::core/properties @the-state*))}))
+                                                                              (count
+                                                                                clusters)
+                                                       :deletion-history-size (count (::core/grid-cell-deletion-history @the-state*))
+                                                       ;:cluster-sizes (into {}
+                                                       ;                     (map (fn [c]
+                                                       ;                            [c (core/cluster->size c @the-state*)])
+                                                       ;                          clusters))
+                                                       :grid-count            (count (::core/grid-cells @the-state*))
+                                                       :N                     (::core/N (::core/properties @the-state*))}))
                                        (swap! state-appender*
                                               assoc
                                               (::core/current-time @the-state*)

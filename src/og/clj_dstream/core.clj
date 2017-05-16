@@ -159,12 +159,12 @@
         new-state)
       (let [new-state (assoc-in state
                                 [::grid-cells idx]
-                                {::last-update-time              t
-                                 ::density-at-last-update        1.0
-                                 ::sporadicity                   ::normal
-                                 ::cluster                       nil
-                                 ::label                         ::sparse
-                                 ::last-time-label-changed       0})]
+                                {::last-update-time        t
+                                 ::density-at-last-update  1.0
+                                 ::sporadicity             ::normal
+                                 ::cluster                 nil
+                                 ::label                   ::sparse
+                                 ::last-time-label-changed 0})]
         new-state))))
 
 (defn phase-space->cell-count [{:keys [::phase-space]}]
@@ -619,30 +619,54 @@
                          (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster (:cluster biggest)))))))))))))
     @updated-state*))
 
+(defn update-deletion-history! [state* pos-idx t]
+  (swap! state* assoc-in [::grid-cell-deletion-history pos-idx] t))
+
 (defn detect-and-remove-sporadic-grids [state t]
   ;;TODO spec this
 
-  (let [state*         (atom state)
-        props          (::properties state)
-        sparse-grids   (filter (fn [[pos-idx char-vec]]
-                                 (let [pi-t_g-t (/ (* (::c_l props)
-                                                      (- 1.0 (Math/pow (::lambda props) (+ t
-                                                                                           (* -1.0 (::last-update-time char-vec))
-                                                                                           1.0))))
-                                                   (* (::N props)
-                                                      (- 1.0 (::lambda props))))])
-                                 (= ::sparse (::label char-vec))) (::grid-cells state))
-
-        new-grid-cells (into {}
-                             (remove (fn [[pos-idx char-vec]]
-
-                                       ;;TODO actually implement this, nothing actually sets
-                                       ;; any char vecs as ::sporadic
-
-
-                                       (= ::sporadic (::sporadicity char-vec))
-                                       ) (::grid-cells state)))]
-    (swap! state* assoc-in [::grid-cells] new-grid-cells)
+  (let [state* (atom state)
+        props  (::properties state)]
+    (doseq [[pos-idx char-vec] (::grid-cells state)]
+      (when (= ::sparse (::label char-vec))
+        (let [
+              last-time-deleted                            (get (::grid-cell-deletion-history state) pos-idx)
+              pi-t_g-t                                     (/ (* (::c_l props)
+                                                                 (- 1.0 (Math/pow (::lambda props) (+ t
+                                                                                                      (* -1.0 (::last-update-time char-vec))
+                                                                                                      1.0))))
+                                                              (* (::N props)
+                                                                 (- 1.0 (::lambda props))))
+              s1                                           (< (::density-at-last-update char-vec) pi-t_g-t)
+              s2                                           (or
+                                                             (not last-time-deleted)
+                                                             (>= t (* last-time-deleted
+                                                                      (+ 1.0
+                                                                         (::beta props)))))
+              is-sporadic                                  (= ::sporadic (::sporadicity char-vec))
+              had-data-since-last-time-checked-if-sporadic (>= (::gap-time props)
+                                                               (- t
+                                                                  (::last-update-time char-vec)))]
+          (if (and (not is-sporadic)
+                   s1
+                   s2)
+            (do
+              (log-it pos-idx ::grid-cell-became-sporadic [pos-idx char-vec])
+              (update-char-vec-in-state! state* pos-idx (assoc char-vec ::sporadicity ::sporadic)))
+            (if (and is-sporadic
+                     (not had-data-since-last-time-checked-if-sporadic))
+              (let [grids-wo-this-one (into {} (filter (fn [[k v]]
+                                                         (not (= k pos-idx)))
+                                                       (::grid-cells @state*)))]
+                (log-it pos-idx ::sporadic-grid-cell-deleted [pos-idx char-vec])
+                (swap! state* assoc-in [::grid-cells] grids-wo-this-one)
+                (update-deletion-history! state* pos-idx t))
+              (when-not (and
+                          s1
+                          s2)
+                (do
+                  (log-it pos-idx ::grid-cell-became-normal [pos-idx char-vec])
+                  (update-char-vec-in-state! state* pos-idx (assoc char-vec ::sporadicity ::normal)))))))))
     @state*))
 
 (defn properties->gap-time [properties]
