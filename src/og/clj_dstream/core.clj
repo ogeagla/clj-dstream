@@ -8,7 +8,6 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-;;TODO remove as sporadic needs to compute if char vec is sporadic, nothing does that ATM
 ;;TODO remove log-it and use real logging with contexts
 ;;TODO initial clustering never goes more than 2 iterations, could there be a bug in state exchanges?
 ;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
@@ -95,17 +94,9 @@
   (->>
     pos-idx
     (map-indexed (fn [idx pos-idx]
-
-                   (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)
-                         ]
-
-                     (+ domain-start (* pos-idx domain-interval))
-
-                     )
-
-                   )))
-
-  )
+                   (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)]
+                     (+ domain-start (* pos-idx domain-interval)))))
+    vec))
 
 (defn position-value->position-index [{:keys [::position-value ::phase-space]}]
   (when-not (= (count position-value) (count phase-space))
