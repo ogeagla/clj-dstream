@@ -13,9 +13,10 @@
                            {::core/position-value
                             (let [r (rand)]
                               (cond
-                                (<= 0.0 r 0.33) (utils/sample-rect [0.2 0.2 0.2 0.2] [0.2 0.2 0.2 0.2])
-                                (<= 0.33 r 0.66) (utils/sample-rect [0.2 0.2 0.2 0.2] [-0.5 -0.5 -0.5 -0.5])
-                                (<= 0.66 r 1.0) (utils/sample-rect [0.2 0.2 0.2 0.2] [-0.7 -0.7 0.7 0.7])))
+                                (<= 0.0 percent-complete 0.33) (utils/sample-rect [0.3 0.3 0.2 0.2] [0.2 0.2 0.2 0.2])
+                                (<= 0.33 percent-complete 0.45) (utils/sample-rect [0.3 0.3 0.2 0.2] [-0.5 -0.5 -0.5 -0.5])
+                                (<= 0.45 percent-complete 0.55) (utils/sample-rect [0.3 0.3 0.2 0.2] [-0.7 -0.7 0.7 0.7])
+                                (<= 0.55 percent-complete 1.00) (utils/sample-rect [0.3 0.3 0.2 0.2] [-0.6 -0.6 -0.3 -0.3])))
 
                             ::core/value 1.0})]
     res))
@@ -38,17 +39,17 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.05}]
-                        ::core/gap-time    3}
+                        ::core/gap-time    10}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->rects
-                          :time-intervals         15
+                          :time-intervals         1000
                           :out-name               "high-dim-normal-sampling"
                           :out-dir                "high-dim-normal-out"
                           :props                  props
-                          :data-per-time-interval 500
+                          :data-per-time-interval 20
                           ;:disable-logging        true
                           })
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    (is (= 3 (count final-clusters)))
+    (is (= 1 (count final-clusters)))
     ))

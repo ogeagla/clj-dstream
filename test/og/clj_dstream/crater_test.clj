@@ -40,9 +40,9 @@
 
     (api/sample-next-data
       {:sampling-fn            time->crater-2d-sample
-       :time-intervals         20
+       :time-intervals         10
        :out-name               "crater-sampling"
        :out-dir                "crater-out"
        :props                  props
-       :data-per-time-interval 1000
+       :data-per-time-interval 100
        :disable-logging        true})))

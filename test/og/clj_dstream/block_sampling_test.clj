@@ -35,7 +35,7 @@
                           :out-name               "block-sampling"
                           :out-dir                "block-out"
                           :props                  props
-                          :data-per-time-interval 60
+                          :data-per-time-interval 50
                           :disable-logging        true})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]

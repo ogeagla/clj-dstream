@@ -13,7 +13,7 @@
                            {::core/position-value
                                          (let [size 0.35]
                                            (cond
-                                             (< percent-complete 0.3) (utils/sample-circle-2d size :offsets [0.3 0.3])
+                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.3 0.3])
                                              :else (utils/sample-circle-2d size :offsets [-0.3 -0.3])))
                             ::core/value 1.0})]
     res))
@@ -30,15 +30,15 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
-                        ::core/gap-time    10}
+                        ::core/gap-time    4}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->3-cluster-sample
                           :time-intervals         200
                           :out-name               "moving-normal-sampling"
                           :out-dir                "moving-normal-out"
                           :props                  props
-                          :data-per-time-interval 50
+                          :data-per-time-interval 20
                           :disable-logging        true})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    (is (= 1 (count final-clusters)))))
+    (is (<= 1 (count final-clusters)))))
