@@ -8,9 +8,9 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
+;;TODO remove as sporadic needs to compute if char vec is sporadic, nothing does that ATM
+;;TODO remove log-it and use real logging with contexts
 ;;TODO initial clustering never goes more than 2 iterations, could there be a bug in state exchanges?
-;;TODO adjust-clustering every N should either be 1 by defauly (?) or computed dynamically to ensure even eg 20 data points results in some meaningful output
-;;TODO more than one datum per time slice? 
 ;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
 
 (def do-logging (atom true))
@@ -50,13 +50,14 @@
 
 (s/def ::char-vec (s/keys :req [::last-time-label-changed
                                 ::last-update-time
-                                ::last-time-removed-as-sporadic
                                 ::density-at-last-update
                                 ::sporadicity
                                 ::cluster
                                 ::label]))
 
 (s/def ::grid-cells (s/map-of ::position-index ::char-vec))
+
+(s/def ::grid-cell-deletion-history (s/map-of ::position-index ::last-time-removed-as-sporadic))
 
 (s/def ::gap-time pos-int?)
 
@@ -79,6 +80,7 @@
 (s/def ::initialized-clusters boolean?)
 
 (s/def ::state (s/keys :req [::grid-cells
+                             ::grid-cell-deletion-history
                              ::properties
                              ::initialized-clusters]
                        :opt [::current-time
@@ -97,12 +99,11 @@
                    (let [{:keys [::domain-start ::domain-end ::domain-interval]} (get phase-space idx)
                          ]
 
-                     (+ domain-start (* pos-idx domain-interval ))
+                     (+ domain-start (* pos-idx domain-interval))
 
                      )
 
                    )))
-
 
   )
 
@@ -159,7 +160,6 @@
       (let [new-state (assoc-in state
                                 [::grid-cells idx]
                                 {::last-update-time              t
-                                 ::last-time-removed-as-sporadic 0
                                  ::density-at-last-update        1.0
                                  ::sporadicity                   ::normal
                                  ::cluster                       nil
@@ -248,9 +248,9 @@
            truth-per-dim    (doall (map-indexed
                                      (fn [idx pos-at-idx]
                                        (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
-                                                                          (let [are-they? (are-neighbors grid-pos grid-from-group idx)]
-                                                                            are-they?))
-                                                                        group-minus-grid)]
+                                                                           (let [are-they? (are-neighbors grid-pos grid-from-group idx)]
+                                                                             are-they?))
+                                                                         group-minus-grid)]
                                          (or (some true? neighbors-in-this-dim)
                                              false)))
                                      grid-pos))
@@ -389,7 +389,7 @@
       (log-it initial-cluster ::initial-cluster initial-cluster)
       (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
         (doseq [grid-in-cluster grids-in-cluster]
-          (log-it initial-cluster ::grid-in-cluster grid-in-cluster)
+          #_(log-it initial-cluster ::grid-in-cluster grid-in-cluster)
           (let [its-grid-group (grid-cell->grid-group (apply hash-map grid-in-cluster)
                                                       (::grid-cells @the-state*))
                 outside-grids  (filter
@@ -623,8 +623,23 @@
   ;;TODO spec this
 
   (let [state*         (atom state)
+        props          (::properties state)
+        sparse-grids   (filter (fn [[pos-idx char-vec]]
+                                 (let [pi-t_g-t (/ (* (::c_l props)
+                                                      (- 1.0 (Math/pow (::lambda props) (+ t
+                                                                                           (* -1.0 (::last-update-time char-vec))
+                                                                                           1.0))))
+                                                   (* (::N props)
+                                                      (- 1.0 (::lambda props))))])
+                                 (= ::sparse (::label char-vec))) (::grid-cells state))
+
         new-grid-cells (into {}
                              (remove (fn [[pos-idx char-vec]]
+
+                                       ;;TODO actually implement this, nothing actually sets
+                                       ;; any char vecs as ::sporadic
+
+
                                        (= ::sporadic (::sporadicity char-vec))
                                        ) (::grid-cells state)))]
     (swap! state* assoc-in [::grid-cells] new-grid-cells)

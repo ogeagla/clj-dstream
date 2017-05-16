@@ -12,13 +12,7 @@
                            ::core/raw-datum
                            {::core/position-value
                                          (let [size 0.4]
-                                           (cond
-                                             (< percent-complete 0.1) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             (< percent-complete 0.3) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             (< percent-complete 0.4) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             (< percent-complete 0.5) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             :else (utils/sample-circle-2d size :offsets [0.2 0.2])))
+                                           (utils/sample-circle-2d size :offsets [0.2 0.2]))
                             ::core/value 1.0})]
     res))
 (deftest normal-dataset
@@ -27,8 +21,7 @@
                         ::core/lambda      0.998
                         ::core/beta        0.3
                         ::core/dimensions  2
-                        ::core/phase-space [
-                                            {::core/domain-start    -1.0
+                        ::core/phase-space [{::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.05}
                                             {::core/domain-start    -1.0
@@ -37,7 +30,7 @@
                         ::core/gap-time    5}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->circle-sample
-                          :time-intervals         100
+                          :time-intervals         20
                           :out-name               "normal-sampling"
                           :out-dir                "normal-out"
                           :props                  props

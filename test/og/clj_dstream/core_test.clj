@@ -8,72 +8,67 @@
    ::core/position-value [0.5 0.5 0.5 0.5]})
 
 (def test-state
-  {::core/current-time         0
-   ::core/data-count           0
-   ::core/grid-cells           {[10 1 2 2] {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.13
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}
-                                [10 1 2 3] {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.3
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}
-                                [0 1 2 3]  {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.11
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}
-                                [0 1 2 4]  {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.02
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}
-                                [0 1 2 5]  {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.55
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}
-                                [0 1 3 5]  {::core/last-update-time              0
-                                            ::core/last-time-removed-as-sporadic 0
-                                            ::core/density-at-last-update        0.66
-                                            ::core/sporadicity                   ::core/normal
-                                            ::core/cluster                       nil
-                                            ::core/label                         ::core/sparse
-                                            ::core/last-time-label-changed       0}}
-   ::core/properties           {::core/N                10000
-                                ::core/c_m              3.0
-                                ::core/c_l              0.8
-                                ::core/lambda           0.998
-                                ::core/beta             0.3
-                                ::core/dimensions       4
-                                ::core/last-update-time 0
-                                ::core/phase-space      [
-                                                         {::core/domain-start    0.0
-                                                          ::core/domain-end      1.0
-                                                          ::core/domain-interval 0.1}
-                                                         {::core/domain-start    0.0
-                                                          ::core/domain-end      1.0
-                                                          ::core/domain-interval 0.1}
-                                                         {::core/domain-start    0.0
-                                                          ::core/domain-end      1.0
-                                                          ::core/domain-interval 0.1}
-                                                         {::core/domain-start    0.0
-                                                          ::core/domain-end      1.0
-                                                          ::core/domain-interval 0.1}]
-                                ::core/gap-time         4}
-   ::core/initialized-clusters true})
+  {::core/current-time               0
+   ::core/data-count                 0
+   ::core/grid-cell-deletion-history {}
+   ::core/grid-cells                 {[10 1 2 2] {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.13
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}
+                                      [10 1 2 3] {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.3
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}
+                                      [0 1 2 3]  {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.11
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}
+                                      [0 1 2 4]  {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.02
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}
+                                      [0 1 2 5]  {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.55
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}
+                                      [0 1 3 5]  {::core/last-update-time        0
+                                                  ::core/density-at-last-update  0.66
+                                                  ::core/sporadicity             ::core/normal
+                                                  ::core/cluster                 nil
+                                                  ::core/label                   ::core/sparse
+                                                  ::core/last-time-label-changed 0}}
+   ::core/properties                 {::core/N                10000
+                                      ::core/c_m              3.0
+                                      ::core/c_l              0.8
+                                      ::core/lambda           0.998
+                                      ::core/beta             0.3
+                                      ::core/dimensions       4
+                                      ::core/last-update-time 0
+                                      ::core/phase-space      [
+                                                               {::core/domain-start    0.0
+                                                                ::core/domain-end      1.0
+                                                                ::core/domain-interval 0.1}
+                                                               {::core/domain-start    0.0
+                                                                ::core/domain-end      1.0
+                                                                ::core/domain-interval 0.1}
+                                                               {::core/domain-start    0.0
+                                                                ::core/domain-end      1.0
+                                                                ::core/domain-interval 0.1}
+                                                               {::core/domain-start    0.0
+                                                                ::core/domain-end      1.0
+                                                                ::core/domain-interval 0.1}]
+                                      ::core/gap-time         4}
+   ::core/initialized-clusters       true})
 
 (deftest computes-cell-count-from-phase-space
   (let [p-space-1 {::core/phase-space
@@ -102,7 +97,6 @@
   (let [props    (::core/properties test-state)
         char-vec {::core/last-time-label-changed       0
                   ::core/last-update-time              0
-                  ::core/last-time-removed-as-sporadic 0
                   ::core/density-at-last-update        0.11
                   ::core/sporadicity                   ::core/normal
                   ::core/cluster                       nil
@@ -151,42 +145,36 @@
 
 (deftest is-grid-cluster
   (let [candidate-1 {[0 0 0] {::core/last-update-time              0
-                              ::core/last-time-removed-as-sporadic 0
                               ::core/density-at-last-update        0.11
                               ::core/sporadicity                   ::core/normal
                               ::core/cluster                       nil
                               ::core/label                         ::core/dense
                               ::core/last-time-label-changed       0}}
         candidate-2 {[0 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/transitional
                             ::core/last-time-label-changed       0}
                      [1 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/dense
                             ::core/last-time-label-changed       0}
                      [1 0] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/dense
                             ::core/last-time-label-changed       0}
                      [1 2] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/dense
                             ::core/last-time-label-changed       0}
                      [2 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
@@ -194,35 +182,30 @@
                             ::core/last-time-label-changed       0}}
 
         candidate-3 {[0 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/transitional
                             ::core/last-time-label-changed       0}
                      [1 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/sparse
                             ::core/last-time-label-changed       0}
                      [1 0] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/dense
                             ::core/last-time-label-changed       0}
                      [1 2] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
                             ::core/label                         ::core/dense
                             ::core/last-time-label-changed       0}
                      [2 1] {::core/last-update-time              0
-                            ::core/last-time-removed-as-sporadic 0
                             ::core/density-at-last-update        0.11
                             ::core/sporadicity                   ::core/normal
                             ::core/cluster                       nil
@@ -235,22 +218,20 @@
 (deftest initialize-clustering
   (let [state-before-1 {::core/current-time         0
                         ::core/data-count           0
+                        ::core/grid-cell-deletion-history {}
                         ::core/grid-cells           {[0 1 2 3] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.11
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
                                                                 ::core/last-time-label-changed       0}
                                                      [0 1 2 4] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.02
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
                                                                 ::core/last-time-label-changed       0}
                                                      [0 1 2 5] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.55
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
@@ -278,22 +259,20 @@
                         ::core/initialized-clusters true}
         state-before-2 {::core/current-time         0
                         ::core/data-count           0
+                        ::core/grid-cell-deletion-history {}
                         ::core/grid-cells           {[0 1 2 3] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.11
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
                                                                 ::core/last-time-label-changed       0}
                                                      [0 1 2 4] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.02
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
                                                                 ::core/last-time-label-changed       0}
                                                      [0 1 2 5] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.55
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
@@ -301,14 +280,12 @@
                                                                 ::core/last-time-label-changed       0}
 
                                                      [0 1 4 5] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.55
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
                                                                 ::core/last-time-label-changed       0}
                                                      [0 1 5 5] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.55
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
@@ -316,7 +293,6 @@
                                                                 ::core/last-time-label-changed       0}
 
                                                      [0 1 6 5] {::core/last-update-time              0
-                                                                ::core/last-time-removed-as-sporadic 0
                                                                 ::core/density-at-last-update        0.55
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
@@ -354,45 +330,38 @@
 
 (deftest split-cluster
   (let [cluster-1 {[0 1 2 3]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.11
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
                    [0 1 2 4]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.02
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
                    [0 1 2 5]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.55
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
 
                    [0 1 4 5]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.55
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
                    [0 1 5 5]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.55
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
 
                    [0 1 6 5]  {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.55
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"
                                ::core/label                         ::core/sparse}
                    [10 2 6 5] {::core/last-update-time              0
-                               ::core/last-time-removed-as-sporadic 0
                                ::core/density-at-last-update        0.55
                                ::core/sporadicity                   ::core/normal
                                ::core/cluster                       "A"

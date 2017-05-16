@@ -39,4 +39,4 @@
                           :disable-logging        true})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    (is (>= 3 (count final-clusters)))))
+    (is (<= 3 (count final-clusters)))))

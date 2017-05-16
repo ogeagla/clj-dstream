@@ -19,7 +19,7 @@
 
                             ::core/value 1.0})]
     res))
-(deftest normal-dataset
+#_(deftest normal-dataset
   (let [props          {::core/c_m         3.0
                         ::core/c_l         0.8
                         ::core/lambda      0.998
@@ -38,17 +38,17 @@
                                             {::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.05}]
-                        ::core/gap-time    5}
+                        ::core/gap-time    3}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->rects
-                          :time-intervals         100
+                          :time-intervals         15
                           :out-name               "high-dim-normal-sampling"
                           :out-dir                "high-dim-normal-out"
                           :props                  props
-                          :data-per-time-interval 20
+                          :data-per-time-interval 500
                           ;:disable-logging        true
                           })
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    #_(is (= 1 (count final-clusters)))
+    (is (= 3 (count final-clusters)))
     ))

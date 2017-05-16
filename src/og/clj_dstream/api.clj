@@ -40,9 +40,10 @@
         samples         (map (fn [t]
                                (sampling-fn t total-data props))
                              (range total-data))
-        the-state*      (atom {::core/grid-cells           {}
-                               ::core/properties           props
-                               ::core/initialized-clusters false})
+        the-state*      (atom {::core/grid-cells                 {}
+                               ::core/grid-cell-deletion-history {}
+                               ::core/properties                 props
+                               ::core/initialized-clusters       false})
         parted-samples  (partition data-per-time-interval samples)
 
         plot-every-nth  (max 1 (int (/ time-intervals 50.0)))
