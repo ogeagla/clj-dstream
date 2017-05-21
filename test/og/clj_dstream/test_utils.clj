@@ -6,7 +6,7 @@
        ::core/grid-cells
        vals
        (map ::core/cluster)
-       (remove #(= "NO_CLASS" %))
+       (remove #(not (core/is-cluster? %)))
        distinct
        count))
 

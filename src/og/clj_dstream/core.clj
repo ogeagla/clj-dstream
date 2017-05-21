@@ -8,6 +8,7 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
+;;TODO persist state
 ;;TODO remove log-it and use real logging with contexts
 ;;TODO initial clustering never goes more than 2 iteraftions, could there be a bug in state exchanges?
 ;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
@@ -68,6 +69,11 @@
                        :opt [::current-time
                              ::data-count]))
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
+
+;;TODO use this so i can phase out NO_CLASS
+(defn is-cluster? [cluster]
+  (not (or (= nil cluster)
+           (= "NO_CLASS" cluster))))
 
 (defn position-index->position-value [pos-idx phase-space]
   (when-not (= (count pos-idx) (count phase-space))
@@ -269,7 +275,7 @@
 (defn cluster->grid-cells [cluster state]
   (p ::cluster->grid-cells
      ;;TODO spec this
-     (if-not (= "NO_CLASS" cluster)
+     (if (is-cluster? cluster)
        (into {}
              (->> state
                   ::grid-cells
@@ -353,8 +359,7 @@
                           ::grid-cells
                           vals
                           (map ::cluster)
-                          (remove nil?)
-                          (remove #(= "NO_CLASS" %))
+                          (remove #(not (is-cluster? %)))
                           distinct)]
     (doseq [initial-cluster the-clusters]
       (let [grids-in-cluster (cluster->grid-cells initial-cluster @the-state*)]
@@ -415,10 +420,9 @@
   (let [clus         (->>
                        (::grid-cells state)
                        (map #(::cluster (second %)))
-                       (remove #(or (nil? %)
-                                    (= "NO_CLASS" %)))
-                       (map (fn [cluster]
-                              [cluster (cluster->grid-cells cluster state)])))
+                       (remove #(not (is-cluster? %)))
+                       (pmap (fn [cluster]
+                               [cluster (cluster->grid-cells cluster state)])))
         w-grid-cells (into {}
                            clus)]
     {:clusters-grid-cells w-grid-cells
@@ -433,8 +437,7 @@
     (init-clustering-iterations init-state* 1)))
 
 (defn- step-nine! [current-cluster updated-state* pos-idx biggest-neighbor char-vec]
-  (if (or (= "NO_CLASS" current-cluster)
-          (= nil current-cluster))
+  (if (not (is-cluster? current-cluster))
     ;;step 10
     (do
       ;;TODO how can this biggestneighbor print sometimes show nil?
@@ -477,7 +480,7 @@
   ;;TODO is this correct? i think outer when needs an if, as there is an else case in the paper
   (when
     (and
-      (= "NO_CLASS" current-cluster)
+      (not (is-cluster? current-cluster))
       (= ::outside (pos-is-inside-or-outside-group
                      (first (keys grid-w-biggest-neighbor))
                      (keys
@@ -491,8 +494,7 @@
         char-vec
         ::cluster
         biggest-neighbor)))
-  (when (and (not (= "NO_CLASS" current-cluster))
-             (not (= nil current-cluster))
+  (when (and (is-cluster? current-cluster)
              (>= (cluster->size current-cluster @updated-state*)
                  (cluster->size biggest-neighbor @updated-state*)))
     (update-char-vec-in-state!
@@ -527,19 +529,18 @@
                                                                            neighbors
                                                                            vals
                                                                            (map ::cluster)
-                                                                           (remove #(= nil %))
-                                                                           (remove #(= "NO_CLASS" %))
+                                                                           (remove #(not (is-cluster? %)))
                                                                            not-empty)]
                                                   (log-it pos-idx ::step-seven.neighbors.clusters (vec neighbors-clusters))
                                                   (when neighbors-clusters
                                                     (let [biggest-neighbor-maps   (->>
                                                                                     neighbors-clusters
-                                                                                    (map (fn [cluster]
-                                                                                           (hash-map
-                                                                                             :cluster cluster
-                                                                                             :cluster-size (cluster->size
-                                                                                                             cluster
-                                                                                                             @updated-state*))))
+                                                                                    (pmap (fn [cluster]
+                                                                                            (hash-map
+                                                                                              :cluster cluster
+                                                                                              :cluster-size (cluster->size
+                                                                                                              cluster
+                                                                                                              @updated-state*))))
                                                                                     )
                                                           biggest-neighbor        (->> biggest-neighbor-maps
                                                                                        (sort-by :cluster-size)
@@ -573,8 +574,7 @@
                                           neighbors
                                           vals
                                           (map ::cluster)
-                                          (remove nil?)
-                                          (remove #(= "NO_CLASS" %))
+                                          (remove #(not (is-cluster? %)))
                                           not-empty)]
                  (when neighbors-clusters
                    (let [n-clusters-w-grid-added (remove nil? (pmap (fn [neighbors-cluster]

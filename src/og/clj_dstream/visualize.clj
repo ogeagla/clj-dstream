@@ -101,8 +101,7 @@
         rows            (int (/ (- (::core/domain-end d1) (::core/domain-start d1)) (::core/domain-interval d1)))
         cols            (int (/ (- (::core/domain-end d2) (::core/domain-start d2)) (::core/domain-interval d2)))
         clusters        (distinct
-                          (remove #(or (= nil %)
-                                       (= "NO_CLASS" %))
+                          (remove #(not (core/is-cluster? %))
                                   (map ::core/cluster (vals grid-cells))))
         clusters-colors (into {}
                               (map (fn [c]
@@ -113,8 +112,7 @@
             (let [num (or
                         (when clusters-only
                           (let [cluster (::core/cluster (get grid-cells [r c]))]
-                            (if (and (not (= nil cluster))
-                                     (not (= "NO_CLASS" cluster)))
+                            (if (core/is-cluster? cluster)
                               (do
                                 (get clusters-colors cluster))
                               (/ (rand) 1000))))
@@ -134,6 +132,15 @@
     (catch Throwable t
       (println "Could not create animated gif:" t))))
 
+(defn get-cluster-position-values [grid-cells props]
+  (into {} (remove nil? (map-indexed (fn [idx [pos-idx char-vec]]
+                                       (let [cluster (::core/cluster char-vec)]
+                                         (if (core/is-cluster? cluster)
+                                           [(core/position-index->position-value pos-idx (::core/phase-space props))
+                                            {:cluster cluster
+                                             :idx     idx}])))
+                                     grid-cells))))
+
 (defn display-state [dir name props grid-cells]
   (if-not (fs/exists? dir)
     (fs/mkdir dir))
@@ -145,14 +152,7 @@
       (cartesian-viz (str dir "/clusters-" name) :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
     (do
       ;      (throw (ex-info "Unsupported dimensionality" props))
-      (let [cluster-positions (into {} (remove nil? (map-indexed (fn [idx [pos-idx char-vec]]
-                                                                   (let [cluster (::core/cluster char-vec)]
-                                                                     (if-not (or (= nil cluster)
-                                                                                 (= "NO_CLASS" cluster))
-                                                                       [(core/position-index->position-value pos-idx (::core/phase-space props))
-                                                                        {:cluster cluster
-                                                                         :idx     idx}])))
-                                                                 grid-cells)))
+      (let [cluster-positions (get-cluster-position-values grid-cells props)
             _                 (println "cluster poss: " (count cluster-positions))
             algo-name         :parallel-bht]
         (when (< 0 (count cluster-positions))
@@ -164,7 +164,7 @@
                               )
 
                 ]
-            (export-scatter-viz tsne-output scatter-spec  (str dir "/clusters-" name ".svg") )
+            (export-scatter-viz tsne-output scatter-spec (str dir "/clusters-" name ".svg"))
             )
 
           )

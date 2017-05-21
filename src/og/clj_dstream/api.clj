@@ -5,6 +5,12 @@
     [og.clj-dstream.visualize :as visualize]))
 
 
+;;TODO
+(defn load-state [])
+
+;;TODO
+(defn save-state [])
+
 (defn get-clusters [state]
   "Get cilantro"
   (core/state->clusters state))
@@ -57,7 +63,7 @@
                                               (::core/current-time @the-state*)
                                               plot-every-nth))
                                      (do
-                                       (let [clusters (remove #(or (nil? %) (= "NO_CLASS" %))
+                                       (let [clusters (remove #(not (core/is-cluster? %))
                                                               (distinct
                                                                 (map ::core/cluster
                                                                      (map

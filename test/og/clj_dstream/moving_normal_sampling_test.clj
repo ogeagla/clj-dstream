@@ -11,10 +11,10 @@
         res              (hash-map
                            ::core/raw-datum
                            {::core/position-value
-                                         (let [size 0.35]
+                                         (let [size 0.3]
                                            (cond
-                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.3 0.3])
-                                             :else (utils/sample-circle-2d size :offsets [-0.3 -0.3])))
+                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             :else (utils/sample-circle-2d size :offsets [-0.2 -0.2])))
                             ::core/value 1.0})]
     res))
 (deftest normal-dataset
@@ -23,8 +23,7 @@
                         ::core/lambda      0.998
                         ::core/beta        0.3
                         ::core/dimensions  2
-                        ::core/phase-space [
-                                            {::core/domain-start    -1.0
+                        ::core/phase-space [{::core/domain-start    -1.0
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.05}
                                             {::core/domain-start    -1.0
@@ -33,7 +32,7 @@
                         ::core/gap-time    4}
         final-state    (api/sample-next-data
                          {:sampling-fn            time->3-cluster-sample
-                          :time-intervals         200
+                          :time-intervals         300
                           :out-name               "moving-normal-sampling"
                           :out-dir                "moving-normal-out"
                           :props                  props
@@ -41,4 +40,4 @@
                           :disable-logging        true})
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
-    (is (<= 1 (count final-clusters)))))
+    (is (= 1 (count final-clusters)))))
