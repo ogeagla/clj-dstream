@@ -4,6 +4,7 @@
     [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
     [og.clj-dstream.visualize :as visualize]))
 
+;;TODO persist state
 
 ;;TODO
 (defn load-state [])

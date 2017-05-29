@@ -56,7 +56,9 @@
                           :out-dir                "crescents-out"
                           :props                  props
                           :data-per-time-interval 150
-                          :disable-logging        true})
+                          ;:disable-logging        true
+                          })
 
         final-clusters (keys (:clusters-grid-cells (core/state->clusters final-state)))]
+    ;;TODO this actually seems to work as intended
     (is (<= 2 (count final-clusters)))))

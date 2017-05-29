@@ -8,10 +8,8 @@
              :refer [log trace debug info warn error fatal]]
             [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
-;;TODO persist state
+;;TODO NO_CLASS is actually different from nil, and the new abstraction over is-cluster? needs to be different in some places
 ;;TODO remove log-it and use real logging with contexts
-;;TODO initial clustering never goes more than 2 iteraftions, could there be a bug in state exchanges?
-;;TODO remove concept of 'NO_CLASS', as that is an impl detail from ref paper
 
 (def do-logging (atom true))
 
@@ -373,8 +371,7 @@
                                    (= ::outside
                                       (pos-is-inside-or-outside-group pos-idx
                                                                       (keys its-grid-group))))
-                                 its-grid-group)
-                ]
+                                 its-grid-group)]
             (doseq [outside-grid outside-grids]
               (let [neighbors (grid-cell->neighbors (apply hash-map outside-grid)
                                                     (::grid-cells @the-state*))]
@@ -519,9 +516,6 @@
 
             ;;step 7
             (= ::dense (::label char-vec)) (p ::step-seven
-
-                                              ;;TODO look inyo why im seeing from nil to nil moves
-
                                               (do
                                                 (log-it pos-idx ::step-seven-dense-label char-vec)
                                                 (let [neighbors          (grid-cell->neighbors {pos-idx char-vec} (::grid-cells @updated-state*))

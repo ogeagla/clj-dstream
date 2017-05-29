@@ -1,4 +1,4 @@
-(ns og.clj-dstream.moving-normal-sampling-test
+(ns og.clj-dstream.time-dependent-normal-sampling-test
   (:require [clojure.test :refer :all]
             [og.clj-dstream.core :as core]
             [og.clj-dstream.test-utils :as utils]

@@ -3,10 +3,6 @@
             [og.clj-dstream.core :as core]
             [og.clj-dstream.test-utils :as test-utils]))
 
-(def test-raw-data
-  {::core/value          0.1
-   ::core/position-value [0.5 0.5 0.5 0.5]})
-
 (def test-state
   {::core/current-time               0
    ::core/data-count                 0
@@ -297,9 +293,7 @@
                                                                 ::core/sporadicity                   ::core/normal
                                                                 ::core/cluster                       nil
                                                                 ::core/label                         ::core/sparse
-                                                                ::core/last-time-label-changed       0}
-
-                                                     }
+                                                                ::core/last-time-label-changed       0}}
                         ::core/properties           {::core/N           10000
                                                      ::core/c_m         3.0
                                                      ::core/c_l         0.8
