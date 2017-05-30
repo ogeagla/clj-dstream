@@ -107,11 +107,11 @@
         pos2 [1 1 2 3 4]
         pos3 [1 2 3 3 4]
         pos4 [3 1 2 3 4]]
-    (is (= true (core/are-neighbors pos1 pos2)))
-    (is (= true (core/are-neighbors pos1 pos2 0)))
-    (is (= false (core/are-neighbors pos1 pos2 1)))
-    (is (= false (core/are-neighbors pos2 pos3)))
-    (is (= false (core/are-neighbors pos3 pos4)))))
+    (is (= true (core/are-neighbors {:pos-idxs-1 pos1 :pos-idxs-2 pos2})))
+    (is (= true (core/are-neighbors {:pos-idxs-1 pos1 :pos-idxs-2 pos2 :neigh-dim 0})))
+    (is (= false (core/are-neighbors {:pos-idxs-1 pos1 :pos-idxs-2 pos2 :neigh-dim 1})))
+    (is (= false (core/are-neighbors {:pos-idxs-1 pos2 :pos-idxs-2 pos3})))
+    (is (= false (core/are-neighbors {:pos-idxs-1 pos3 :pos-idxs-2 pos4})))))
 
 (deftest is-grid-group
   (let [candidate-1 [[0 1]

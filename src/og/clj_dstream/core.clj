@@ -169,21 +169,21 @@
       (assoc new-char-vec
         ::last-time-label-changed current-time))))
 
-(defn are-neighbors_unmemo [position-indices-1 position-indices-2 & [neighbor-dimension]]
+(defn are-neighbors_unmemo [{:keys [pos-idxs-1 pos-idxs-2 neigh-dim]}]
   (p ::are-neighbors
-     (if (= position-indices-1 position-indices-2)
+     (if (= pos-idxs-1 pos-idxs-2)
        true
-       (let [zipped-truthiness (->> (pmap vector position-indices-1 position-indices-2)
+       (let [zipped-truthiness (->> (pmap vector pos-idxs-1 pos-idxs-2)
                                     (pmap (fn [[a b]] (= a b))))]
          (and (= 1 (count (remove true? zipped-truthiness)))
               (let [index-of-false (.indexOf zipped-truthiness false)]
                 (and
-                  (if neighbor-dimension
-                    (= neighbor-dimension index-of-false)
+                  (if neigh-dim
+                    (= neigh-dim index-of-false)
                     true)
                   (not (= -1 index-of-false))
-                  (= 1 (Math/abs (- (get position-indices-1 index-of-false)
-                                    (get position-indices-2 index-of-false)))))))))))
+                  (= 1 (Math/abs (- (get pos-idxs-1 index-of-false)
+                                    (get pos-idxs-2 index-of-false)))))))))))
 
 (def are-neighbors (memoize are-neighbors_unmemo))
 
@@ -201,7 +201,8 @@
                 (fn [ref-idx]
                   (and
                     (not (= pos-idx ref-idx))
-                    (are-neighbors pos-idx ref-idx)))
+                    (are-neighbors {:pos-idxs-1 pos-idx
+                                    :pos-idxs-2 ref-idx})))
                 position-indices)])
            position-indices))
        (lgraph/graph))))
@@ -222,10 +223,12 @@
      (let [group-minus-grid (remove #(= grid-pos %) group-poss)
            truth-per-dim    (doall (map-indexed
                                      (fn [idx pos-at-idx]
-                                       (let [neighbors-in-this-dim (pmap (fn [grid-from-group]
-                                                                           (let [are-they? (are-neighbors grid-pos grid-from-group idx)]
-                                                                             are-they?))
-                                                                         group-minus-grid)]
+                                       (let [neighbors-in-this-dim
+                                             (pmap (fn [grid-from-group]
+                                                     (are-neighbors {:pos-idxs-1 grid-pos
+                                                                     :pos-idxs-2 grid-from-group
+                                                                     :neigh-dim  idx}))
+                                                   group-minus-grid)]
                                          (or (some true? neighbors-in-this-dim)
                                              false)))
                                      grid-pos))
@@ -698,10 +701,9 @@
         :ret boolean?)
 
 (s/fdef are-neighbors
-        ;;TODO this doesnt work with optional args
-        :args (s/cat :u (s/cat :indices-1 ::position-index
-                               :indices-2 ::position-index
-                               :pos-dim (s/keys :opt [::neighbor-dimension])))
+        :args (s/cat :u (s/keys :req-un [::pos-idxs-1
+                                         ::pos-idxs-2]
+                                :opt-un [::neigh-dim]))
         :ret boolean?)
 
 (s/fdef one-dstream-update
@@ -730,8 +732,7 @@
   (stest/instrument `put)
   (stest/instrument `update-char-vec-label)
   (stest/instrument `phase-space->cell-count)
-  ;;TODO make this spec work
-  ;(stest/instrument `are-neighbors)
+  (stest/instrument `are-neighbors)
   (stest/instrument `is-grid-group)
   (stest/instrument `pos-is-inside-or-outside-group)
   (stest/instrument `is-grid-cluster)
