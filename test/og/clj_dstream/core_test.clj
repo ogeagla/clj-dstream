@@ -314,8 +314,8 @@
                                                                           ::core/domain-interval 0.1}]
                                                      ::core/gap-time    4}
                         ::core/initialized-clusters true}
-        state-after-1  (core/initial-clustering (atom state-before-1) 1)
-        state-after-2  (core/initial-clustering (atom state-before-2) 1)]
+        state-after-1  (core/initial-clustering state-before-1 1)
+        state-after-2  (core/initial-clustering state-before-2 1)]
     (is (= 1 (test-utils/label-count state-after-1 ::core/dense)))
     (is (= 1 (test-utils/label-count state-after-1 ::core/transitional)))
     (is (= 1 (test-utils/label-count state-after-1 ::core/sparse)))

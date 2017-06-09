@@ -428,10 +428,10 @@
     {:clusters-grid-cells w-grid-cells
      :properties          (::properties state)}))
 
-(defn initial-clustering [state* t]
+(defn initial-clustering [state t]
   ;;TODO spec
   (let [init-state* (atom (->
-                            @state*
+                            state
                             (update-grid-cells)
                             dense-grids->unique-clusters))]
     (init-clustering-iterations init-state* 1)))
@@ -440,7 +440,6 @@
   (if (not (is-cluster? current-cluster))
     ;;step 10
     (do
-      ;;TODO how can this biggestneighbor print sometimes show nil?
       (log-it pos-idx ::step-nine-true biggest-neighbor)
       (update-char-vec-in-state! updated-state* pos-idx (assoc char-vec ::cluster biggest-neighbor)))
     (swap! updated-state* assoc-in [::grid-cells]
@@ -604,8 +603,7 @@
         props  (::properties state)]
     (doseq [[pos-idx char-vec] (::grid-cells state)]
       (when (= ::sparse (::label char-vec))
-        (let [
-              last-time-deleted                            (get (::grid-cell-deletion-history state) pos-idx)
+        (let [last-time-deleted                            (get (::grid-cell-deletion-history state) pos-idx)
               pi-t_g-t                                     (/ (* (::c_l props)
                                                                  (- 1.0 (Math/pow (::lambda props) (+ t
                                                                                                       (* -1.0 (::last-update-time char-vec))
@@ -667,7 +665,7 @@
            t        (::current-time state)
            gap-time (::gap-time (::properties state))]
        (when (= gap-time t)
-         (do (p ::initial-clustering (reset! state* (initial-clustering state* t)))
+         (do (p ::initial-clustering (reset! state* (initial-clustering @state* t)))
              #_(Thread/sleep 99999999)
              ))
 
@@ -677,7 +675,7 @@
        @state*)))
 
 (s/fdef initial-clustering
-        :args (s/cat :u ::state :v ::current-time)
+        :args (s/cat :u ::state :t ::current-time)
         :ret ::state)
 
 (s/fdef update-char-vec-density
@@ -736,7 +734,7 @@
   (stest/instrument `is-grid-group)
   (stest/instrument `pos-is-inside-or-outside-group)
   (stest/instrument `is-grid-cluster)
-  ;(stest/instrument `initial-clustering)
+  (stest/instrument `initial-clustering)
   (stest/instrument `update-char-vec-density))
 
 (instrument-specs!)
