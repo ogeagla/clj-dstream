@@ -30,13 +30,49 @@
    and updates the state accordingly; returns updated state"
   (core/put-data-for-next-time-step state data))
 
-(defn sample-next-data [{:keys [sampling-fn
-                                props
-                                time-intervals
-                                data-per-time-interval
-                                out-name
-                                out-dir
-                                disable-logging]}]
+(defn- iterate-samples [parted-samples the-state* plot-every-nth state-appender*]
+  (doseq [samps parted-samples]
+    (reset! the-state*
+            (put-next-data @the-state* samps))
+    (when (= 0
+             (mod
+               (::core/current-time @the-state*)
+               plot-every-nth))
+      (do
+        (let [clusters (remove #(not (core/is-cluster? %))
+                               (distinct
+                                 (map ::core/cluster
+                                      (map
+                                        second
+                                        (::core/grid-cells @the-state*)))))]
+          (core/log-it (::core/current-time @the-state*)
+                       ::log-state-periodically
+                       {:cluster-count
+                                               (count
+                                                 clusters)
+                        :deletion-history-size (count (::core/grid-cell-deletion-history @the-state*))
+                        :top-3-cluster-sizes   (into {}
+                                                     (take 3
+                                                           (sort-by second
+                                                                    (map (fn [c]
+                                                                           [c (core/cluster->size c @the-state*)])
+                                                                         clusters))))
+                        :grid-count            (count (::core/grid-cells @the-state*))
+                        :N                     (::core/N (::core/properties @the-state*))}))
+        (swap! state-appender*
+               assoc
+               (::core/current-time @the-state*)
+               @the-state*)))))
+
+(defn cluster-sampled-data-experiment [{:keys [sampling-fn
+                                               props
+                                               time-intervals
+                                               data-per-time-interval
+                                               out-name
+                                               out-dir
+                                               disable-logging
+                                               disable-profiling
+                                               disable-plotting]}]
   "Given a sampling function and some information about
   how much data to put per time step and total time steps,
   run the clustering algorithm and plot the results in a nice
@@ -55,57 +91,35 @@
 
         plot-every-nth  (max 1 (int (/ time-intervals 50.0)))
         state-appender* (atom {})
-        [_ prof-stats] (profiled {}
-                                 (doseq [samps parted-samples]
-                                   (reset! the-state*
-                                           (put-next-data @the-state* samps))
-                                   (when (= 0
-                                            (mod
-                                              (::core/current-time @the-state*)
-                                              plot-every-nth))
-                                     (do
-                                       (let [clusters (remove #(not (core/is-cluster? %))
-                                                              (distinct
-                                                                (map ::core/cluster
-                                                                     (map
-                                                                       second
-                                                                       (::core/grid-cells @the-state*)))))]
-                                         (core/log-it (::core/current-time @the-state*)
-                                                      ::log-state-periodically
-                                                      {:cluster-count
-                                                                              (count
-                                                                                clusters)
-                                                       :deletion-history-size (count (::core/grid-cell-deletion-history @the-state*))
-                                                       ;:cluster-sizes (into {}
-                                                       ;                     (map (fn [c]
-                                                       ;                            [c (core/cluster->size c @the-state*)])
-                                                       ;                          clusters))
-                                                       :grid-count            (count (::core/grid-cells @the-state*))
-                                                       :N                     (::core/N (::core/properties @the-state*))}))
-                                       (swap! state-appender*
-                                              assoc
-                                              (::core/current-time @the-state*)
-                                              @the-state*)))))
-        final-state     @the-state*
-        final-grids     (::core/grid-cells final-state)
-        sorted-stats    (take 5 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))
-        displayable     (visualize/display-state
-                          out-dir
-                          (str out-name "-final")
-                          props
-                          (::core/grid-cells final-state))]
 
-    (doall (map-indexed (fn [idx [t staat]]
-                          (visualize/display-state
-                            out-dir
-                            (str out-name "-" (format "%09d" t))
-                            props
-                            (::core/grid-cells staat)))
-                        @state-appender*))
-    (do (visualize/animate-results
-          (str out-dir "/clusters-*")
-          (str out-dir "/animated-clusters.gif"))
-        (visualize/animate-results
-          (str out-dir "/grids-*")
-          (str out-dir "/animated-grids.gif")))
+        _               (if disable-profiling
+                          (iterate-samples parted-samples the-state* plot-every-nth state-appender*)
+                          (let [[_ prof-stats] (profiled {}
+                                                         (iterate-samples parted-samples the-state* plot-every-nth state-appender*))
+                                sorted-stats (take 5 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))]
+                            (println "Stats: ")
+                            (clojure.pprint/pprint sorted-stats)))
+
+        final-state     @the-state*
+        final-grids     (::core/grid-cells final-state)]
+
+    (if-not disable-plotting (do
+                               (visualize/display-state
+                                 out-dir
+                                 (str out-name "-final")
+                                 props
+                                 (::core/grid-cells final-state))
+                               (doall (map-indexed (fn [idx [t staat]]
+                                                     (visualize/display-state
+                                                       out-dir
+                                                       (str out-name "-" (format "%09d" t))
+                                                       props
+                                                       (::core/grid-cells staat)))
+                                                   @state-appender*))
+                               (visualize/animate-results
+                                 (str out-dir "/clusters-*")
+                                 (str out-dir "/animated-clusters.gif"))
+                               (visualize/animate-results
+                                 (str out-dir "/grids-*")
+                                 (str out-dir "/animated-grids.gif"))))
     final-state))

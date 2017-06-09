@@ -49,7 +49,7 @@
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.1}]
                         ::core/gap-time    5}
-        final-state    (api/sample-next-data
+        final-state    (api/cluster-sampled-data-experiment
                          {:sampling-fn            time->crescents-2d-sample
                           :time-intervals         50
                           :out-name               "crescents-sampling"

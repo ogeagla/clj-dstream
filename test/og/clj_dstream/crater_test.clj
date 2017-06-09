@@ -38,7 +38,7 @@
                                     ::core/domain-interval 0.1}]
                ::core/gap-time    5}]
 
-    (api/sample-next-data
+    (api/cluster-sampled-data-experiment
       {:sampling-fn            time->crater-2d-sample
        :time-intervals         10
        :out-name               "crater-sampling"

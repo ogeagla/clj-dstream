@@ -40,7 +40,7 @@
                                              ::core/domain-end      1.0
                                              ::core/domain-interval 0.05}]
                         ::core/gap-time    10}
-        final-state    (api/sample-next-data
+        final-state    (api/cluster-sampled-data-experiment
                          {:sampling-fn            time->rects
                           :time-intervals         1000
                           :out-name               "high-dim-normal-sampling"

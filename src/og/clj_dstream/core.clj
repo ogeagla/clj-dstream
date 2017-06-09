@@ -429,7 +429,6 @@
      :properties          (::properties state)}))
 
 (defn initial-clustering [state t]
-  ;;TODO spec
   (let [init-state* (atom (->
                             state
                             (update-grid-cells)
@@ -476,7 +475,6 @@
                 (update-char-vec-in-state! updated-state* p-i c-v)))))))))
 
 (defn- step-fifteen! [current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor]
-  ;;TODO is this correct? i think outer when needs an if, as there is an else case in the paper
   (when
     (and
       (not (is-cluster? current-cluster))
@@ -597,8 +595,6 @@
   (swap! state* assoc-in [::grid-cell-deletion-history pos-idx] t))
 
 (defn detect-and-remove-sporadic-grids [state t]
-  ;;TODO spec this
-
   (let [state* (atom state)
         props  (::properties state)]
     (doseq [[pos-idx char-vec] (::grid-cells state)]
@@ -678,6 +674,10 @@
         :args (s/cat :u ::state :t ::current-time)
         :ret ::state)
 
+(s/fdef detect-and-remove-sporadic-grids
+        :args (s/cat :u ::state :t ::current-time)
+        :ret ::state)
+
 (s/fdef update-char-vec-density
         :args (s/cat :u ::char-vec
                      :v ::current-time
@@ -735,7 +735,8 @@
   (stest/instrument `pos-is-inside-or-outside-group)
   (stest/instrument `is-grid-cluster)
   (stest/instrument `initial-clustering)
-  (stest/instrument `update-char-vec-density))
+  (stest/instrument `update-char-vec-density)
+  (stest/instrument `detect-and-remove-sporadic-grids))
 
 (instrument-specs!)
 
