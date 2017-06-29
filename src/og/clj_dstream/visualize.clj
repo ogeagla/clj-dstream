@@ -13,6 +13,7 @@
             [me.raynes.fs :as fs]
             [clojure.java.shell :refer [sh]]))
 
+;;TODO make tsne plots have different colors for diff clusters
 
 (defn export-scatter-viz
   [data spec path]
@@ -161,11 +162,5 @@
                               2
                               :tsne-algorithm algo-name
                               ;:perplexity 0.01
-                              )
-
-                ]
-            (export-scatter-viz tsne-output scatter-spec (str dir "/clusters-" name ".svg"))
-            )
-
-          )
-        ))))
+                              )]
+            (export-scatter-viz tsne-output scatter-spec (str dir "/clusters-" name ".svg"))))))))

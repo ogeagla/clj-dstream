@@ -14,5 +14,3 @@
                  [me.raynes/fs "1.4.6"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
-
-;;TODO add fs so that each test can have its own output dir
