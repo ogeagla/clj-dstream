@@ -1,6 +1,8 @@
 (ns og.clj-dstream.test-utils
   (:require [og.clj-dstream.core :as core]))
 
+(def TWO_PI (* 2 (Math/PI)))
+
 (defn cluster-count [state]
   (->> state
        ::core/grid-cells
@@ -18,10 +20,8 @@
        (filter #(= label %))
        count))
 
-
-(def TWO_PI (* 2 (Math/PI)))
-
-(defn sample-ring-2d [r-inner r-outer & {:keys [offsets] :or {offsets [0.0 0.0]}}]
+(defn sample-ring-2d [r-inner r-outer
+                      & {:keys [offsets] :or {offsets [0.0 0.0]}}]
   "Random [x y] inside a ring centered
   about origin with minor/major radii"
   (let [r     (+ r-inner
@@ -32,7 +32,8 @@
     [(+ x (first offsets)) (+ y (second offsets))]))
 
 
-(defn sample-ring-arc-2d [theta-start theta-end r-inner r-outer & {:keys [offsets] :or {offsets [0.0 0.0]}}]
+(defn sample-ring-arc-2d [theta-start theta-end r-inner r-outer
+                          & {:keys [offsets] :or {offsets [0.0 0.0]}}]
   "Random [x y] inside a ring centered
   about origin with minor/major radii
   and with degree range"
@@ -52,11 +53,9 @@
     [rand-x rand-y]))
 
 (defn sample-rect [sizes offsets]
-  (let [stuff (vec (map-indexed (fn [idx offset]
-                                  (+ offset
-                                     (rand (get sizes idx))))
-                                offsets))]
-
-    stuff)
-
-  )
+  (vec
+    (map-indexed
+      (fn [idx offset]
+        (+ offset
+           (rand (get sizes idx))))
+      offsets)))
