@@ -6,7 +6,8 @@
             [loom.graph :as g]
             [taoensso.timbre :as timbre
              :refer [log trace debug info warn error fatal]]
-            [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
+            [taoensso.tufte :as tufte :refer (defnp p profiled profile)])
+  (:import (loom.graph BasicEditableGraph)))
 
 ;;TODO NO_CLASS is actually different from nil, and the new abstraction over is-cluster? needs to be different in some places
 ;;TODO remove log-it and use real logging with contexts
@@ -67,6 +68,7 @@
                        :opt [::current-time
                              ::data-count]))
 (s/def ::raw-datum (s/keys :req [::value ::position-value]))
+(s/def ::graph #(= (Class/forName "BasicEditableGraph") (.getClass %)))
 
 ;;TODO use this so i can phase out NO_CLASS
 (defn is-cluster? [cluster]
@@ -205,7 +207,7 @@
                                     :pos-idxs-2 ref-idx})))
                 position-indices)])
            position-indices))
-       (lgraph/graph))))
+       (^BasicEditableGraph lgraph/graph))))
 
 (def pos-idxs->graph (memoize pos-idxs->graph_unmemo))
 
@@ -669,6 +671,10 @@
          (reset! state* (p ::detect-and-remove-sporadic-grids (detect-and-remove-sporadic-grids @state* t)))
          (reset! state* (p ::adjust-clustering (adjust-clustering @state* t))))
        @state*)))
+
+(s/fdef pos-idxs->graph
+        :args (s/cat :u (s/coll-of ::position-index))
+        :ret ::graph)
 
 (s/fdef initial-clustering
         :args (s/cat :u ::state :t ::current-time)

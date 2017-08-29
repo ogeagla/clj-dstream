@@ -65,6 +65,24 @@
 ;
 ;
 
+(defn cartesian-viz-scatter
+  [the-matrix]
+  ())
+
+(defn scatter-spec
+  [x-size y-size the-matrix & [opts]]
+  (->> {:x-axis (viz/linear-axis
+                  {:domain [0 x-size]
+                   :range [50 550]
+                   :major 50
+                   :minor 25
+                   :pos 580})
+        :y-axis (viz/linear-axis
+                  {:domain [0 y-size]
+                   :range [580 280]
+                   :minor 50
+                   :pos 50})
+        :data [(merge (cartesian-viz-scatter the-matrix) opts)]}))
 
 (defn heatmap-spec
   [id the-matrix]
@@ -74,7 +92,7 @@
    :palette-scale viz/linear-scale
    :layout        viz/svg-heatmap})
 
-(defn cartesian-viz
+(defn cartesian-viz-heatmap
   [prefix id the-matrix rows cols & [opts]]
   (->> {:x-axis (viz/linear-axis
                   {:domain [0 cols]
@@ -91,7 +109,7 @@
                    :label-style {:text-anchor "end"}})
         :data   [(merge (heatmap-spec id the-matrix) opts)]}
        (viz/svg-plot2d-cartesian)
-       (svg/svg {:width 600 :height 300})
+       (svg/svg {:width 600 :height 600})
        (svg/serialize)
        (spit (str prefix "-" (name id) ".svg"))))
 
@@ -149,8 +167,8 @@
     (let [hm1 (grids-2d->heatmap-vec grid-cells props)
           hm2 (grids-2d->heatmap-vec grid-cells props :clusters-only true)]
 
-      (cartesian-viz (str dir "/grids-" name) :orange-blue (:matrix hm1) (:cols hm1) (:rows hm1))
-      (cartesian-viz (str dir "/clusters-" name) :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
+      (cartesian-viz-heatmap (str dir "/grids-" name) :orange-blue (:matrix hm1) (:cols hm1) (:rows hm1))
+      (cartesian-viz-heatmap (str dir "/clusters-" name) :orange-blue (:matrix hm2) (:cols hm2) (:rows hm2)))
     (do
       ;      (throw (ex-info "Unsupported dimensionality" props))
       (let [cluster-positions (get-cluster-position-values grid-cells props)

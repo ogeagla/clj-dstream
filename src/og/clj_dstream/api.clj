@@ -4,14 +4,6 @@
     [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
     [og.clj-dstream.visualize :as visualize]))
 
-;;TODO persist state
-
-;;TODO
-(defn load-state [])
-
-;;TODO
-(defn save-state [])
-
 (defn get-clusters [state]
   "Get cilantro"
   (core/state->clusters state))
@@ -64,21 +56,21 @@
                (::core/current-time @the-state*)
                @the-state*)))))
 
-(defn cluster-sampled-data-experiment [{:keys [sampling-fn
-                                               props
-                                               time-intervals
-                                               data-per-time-interval
-                                               out-name
-                                               out-dir
-                                               disable-logging
-                                               disable-profiling
-                                               disable-plotting]}]
+(defn cluster-sampled-data-experiment
+  [{:keys [sampling-fn
+           props
+           time-intervals
+           data-per-time-interval
+           out-name
+           out-dir
+           disable-logging
+           disable-profiling
+           disable-plotting]}]
   "Given a sampling function and some information about
   how much data to put per time step and total time steps,
   run the clustering algorithm and plot the results in a nice
   way to a directory"
   (when disable-logging (reset! core/do-logging false))
-
   (let [total-data      (* time-intervals data-per-time-interval)
         samples         (map (fn [t]
                                (sampling-fn t total-data props))
@@ -95,8 +87,14 @@
         _               (if disable-profiling
                           (iterate-samples parted-samples the-state* plot-every-nth state-appender*)
                           (let [[_ prof-stats] (profiled {}
-                                                         (iterate-samples parted-samples the-state* plot-every-nth state-appender*))
-                                sorted-stats (take 5 (sort-by #(* -1 (:mean (second %))) (:id-stats-map prof-stats)))]
+                                                         (iterate-samples
+                                                           parted-samples
+                                                           the-state*
+                                                           plot-every-nth
+                                                           state-appender*))
+                                sorted-stats (take 5
+                                                   (sort-by #(* -1 (:mean (second %)))
+                                                            (:id-stats-map prof-stats)))]
                             (println "Stats: ")
                             (clojure.pprint/pprint sorted-stats)))
 
