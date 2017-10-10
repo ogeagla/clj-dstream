@@ -11,6 +11,7 @@
                  [thinktopic/think.tsne "0.1.1"]
                  [net.mikera/core.matrix "0.61.0"]
                  [com.taoensso/tufte "1.1.2"]
-                 [me.raynes/fs "1.4.6"]]
+                 [me.raynes/fs "1.4.6"]
+                 [slacker "0.15.1"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
