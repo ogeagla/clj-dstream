@@ -2,7 +2,6 @@
   (:require [thi.ng.geom.svg.core :as svg]
             [thi.ng.geom.viz.core :as viz]
             [thi.ng.geom.svg.core :as svg]
-            [thi.ng.geom.core.vector :as v]
             [thi.ng.color.core :as col]
             [thi.ng.math.core :as m :refer [PI TWO_PI]]
             [thi.ng.math.simplexnoise :as n]

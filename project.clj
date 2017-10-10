@@ -9,8 +9,8 @@
                  [com.taoensso/timbre "4.10.0"]
                  [thi.ng/geom "0.0.908"]
                  [thinktopic/think.tsne "0.1.1"]
-                 [net.mikera/core.matrix "0.58.0"]
-                 [com.taoensso/tufte "1.1.1"]
+                 [net.mikera/core.matrix "0.61.0"]
+                 [com.taoensso/tufte "1.1.2"]
                  [me.raynes/fs "1.4.6"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
