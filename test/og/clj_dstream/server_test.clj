@@ -25,10 +25,16 @@
                                  ::core/domain-interval 0.1}]
             ::core/gap-time    5})
 
+(deftest test-put-date
+  (println "set props: " (clt/rpc-set-props props))
+  (println "init state: " (clt/rpc-init-state))
+  (println "put data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}])))
+
 (deftest test-props-must-be-set
-  (do
-    (println "set props: " (clt/rpc-set-props props))
-    (println "init state: " (clt/rpc-init-state))
-    (println "put data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}]))
-    (clt/rpc-get-clusters {:a :b})
-    ))
+
+  (try (println "init state: " (clt/rpc-init-state))
+       (catch Exception e
+         (println "Caught ")))
+  (println "set props: " (clt/rpc-set-props props))
+  (println "init state: " (clt/rpc-init-state))
+  (println "put data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}])))

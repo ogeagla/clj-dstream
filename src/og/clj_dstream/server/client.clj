@@ -8,12 +8,6 @@
 (defn-remote conn og.clj-dstream.server.api/init-state)
 (defn-remote conn og.clj-dstream.server.api/set-props)
 
-(defn run-catch [the-fn]
-  (try
-    (eval the-fn)
-    (catch Exception e
-      (println "RPC call failed: " e))))
-
 (defn rpc-set-props [props] (set-props props))
 (defn rpc-init-state [] (init-state))
 (defn rpc-put-data [samples] (put-data samples))
