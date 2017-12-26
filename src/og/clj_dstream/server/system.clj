@@ -1,16 +1,20 @@
 (ns og.clj-dstream.server.system
-  (:require [slacker.server :as server]))
+  (:require [slacker.server :as server]
+            [og.clj-dstream.server.api :as api]))
 
-(def *servers (atom []))
+(def servers* (atom []))
 
 (defn stop []
-  (when (= (count @*servers) 3)
+  (println "** Server Stop **")
+  (api/reset)
+  (when (= (count @servers*) 3)
     (do
-      (server/stop-slacker-server @*servers)
-      (reset! *servers []))))
+      (server/stop-slacker-server @servers*)
+      (reset! servers* []))))
 
 (defn start []
   (stop)
+  (println "** Server Start **")
   (let [[the-tcp-server
          the-http-server
          executors] (server/start-slacker-server
@@ -23,7 +27,7 @@
                                  (println "About to shutting down slacker server")
                                  (stop)
                                  (println "Server stopped."))))
-    (reset! *servers [the-tcp-server the-http-server executors])
+    (reset! servers* [the-tcp-server the-http-server executors])
     (println "Started server on port 2104")))
 
 

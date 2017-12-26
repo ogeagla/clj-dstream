@@ -36,7 +36,7 @@
                                      (sample-crescents-2d circle-r ring-minor-r ring-major-r)
                         ::core/value 1.0})))
 
-(deftest block-dataset
+(deftest crescents-sampling
   (let [props          {::core/c_m         3.0
                         ::core/c_l         0.8
                         ::core/lambda      0.998
