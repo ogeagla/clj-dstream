@@ -33,13 +33,24 @@
            (println "\n 2 init state: " (clt/rpc-init-state))
            :shouldnt-reach
            (catch Exception e
-             (println "-- 2 Caught " e)
+             (println "\n-- 2 Caught " e)
              :except))))
   (= props (clt/rpc-set-props props))
   (println "\n 2 init state: " (clt/rpc-init-state))
   (println "\n 2 put data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}])))
 
-(deftest test-put-date
-  (println "\nset props: " (clt/rpc-set-props props))
-  (println "\ninit state: " (clt/rpc-init-state))
-  (println "\nput data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}])))
+(deftest test-put-data
+  (println "set props: " (clt/rpc-set-props props))
+  (println "init state: " (clt/rpc-init-state))
+  (let [put-data (map (fn [i]
+                        (let [p-data {::core/raw-datum
+                                      {::core/position-value [(- 0.8 (/ i 100)) 0.4]
+                                       ::core/value          1.0}}]
+                          (println "put data: "
+                                   i
+                                   (clt/rpc-put-data [p-data]))
+                          p-data))
+                      (range 100))]
+    (doseq [p-datum put-data]
+      (clojure.pprint/pprint (::core/raw-datum p-datum))
+      (println "Get: " (clt/rpc-predict-cluster-or-outlier (::core/raw-datum p-datum))))))
