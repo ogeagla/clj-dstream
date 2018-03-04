@@ -1,4 +1,6 @@
 # clj-dstream
+## Feedback through issues/PRs is appreciated
+
 
 [![Build Status](https://travis-ci.org/ogeagla/clj-dstream.png)](https://travis-ci.org/ogeagla/clj-dstream)
 
