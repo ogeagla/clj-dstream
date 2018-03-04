@@ -11,13 +11,13 @@
             [lein-figwheel "0.5.13"]]
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/test.check "0.9.0"]
-                 [aysylu/loom "1.0.0"]
+                 [aysylu/loom "1.0.1"]
                  [com.taoensso/timbre "4.10.0"]
                  [thi.ng/geom "0.0.1062"]
                  [thinktopic/think.tsne "0.1.1"]
-                 [net.mikera/core.matrix "0.61.0"]
-                 [com.taoensso/tufte "1.1.2"]
+                 [net.mikera/core.matrix "0.62.0"]
+                 [com.taoensso/tufte "1.1.3"]
                  [me.raynes/fs "1.4.6"]
-                 [slacker "0.16.0"]]
+                 [slacker "0.17.0"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

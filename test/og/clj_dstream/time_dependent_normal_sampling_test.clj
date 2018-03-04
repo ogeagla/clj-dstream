@@ -8,13 +8,28 @@
 
 (defn time->3-cluster-sample [t time-intervals props]
   (let [percent-complete (/ (float t) (float time-intervals))
-        res              (hash-map
+        res
+                         (hash-map
                            ::core/raw-datum
                            {::core/position-value
                                          (let [size 0.3]
                                            (cond
-                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.2 0.2])
-                                             :else (utils/sample-circle-2d size :offsets [-0.2 -0.2])))
+                                             (< percent-complete 0.1) (utils/sample-circle-2d size :offsets [0.2 0.2])
+                                             (< percent-complete 0.15) (utils/sample-circle-2d size :offsets [0.15 0.15])
+                                             (< percent-complete 0.2) (utils/sample-circle-2d size :offsets [0.1 0.1])
+                                             (< percent-complete 0.25) (utils/sample-circle-2d size :offsets [0.0 0.0])
+                                             (< percent-complete 0.3) (utils/sample-circle-2d size :offsets [-0.05 -0.05])
+                                             (< percent-complete 0.35) (utils/sample-circle-2d size :offsets [-0.1 -0.1])
+                                             (< percent-complete 0.4) (utils/sample-circle-2d size :offsets [-0.15 -0.15])
+                                             (< percent-complete 0.5) (utils/sample-circle-2d size :offsets [-0.2 -0.2])
+                                             (< percent-complete 0.55) (utils/sample-circle-2d size :offsets [-0.2 -0.2])
+                                             (< percent-complete 0.6) (utils/sample-circle-2d size :offsets [-0.25 -0.1])
+                                             (< percent-complete 0.65) (utils/sample-circle-2d size :offsets [-0.3 0.0])
+                                             (< percent-complete 0.7) (utils/sample-circle-2d size :offsets [-0.3 0.1])
+                                             (< percent-complete 0.75) (utils/sample-circle-2d size :offsets [-0.3 0.15])
+                                             (< percent-complete 0.8) (utils/sample-circle-2d size :offsets [-0.3 0.2])
+                                             (< percent-complete 0.85) (utils/sample-circle-2d size :offsets [-0.3 0.25])
+                                             :else (utils/sample-circle-2d size :offsets [-0.3 0.3])))
                             ::core/value 1.0})]
     res))
 (deftest normal-dataset
@@ -32,12 +47,12 @@
                         ::core/gap-time    4}
         final-state    (api/cluster-sampled-data-experiment
                          {:sampling-fn            time->3-cluster-sample
-                          :time-intervals         300
+                          :time-intervals         500
                           :out-name               "moving-normal-sampling"
                           :out-dir                "moving-normal-out"
                           :props                  props
-                          :data-per-time-interval 20
-                          :disable-logging        true
+                          :data-per-time-interval 50
+                          :disable-logging        false
                           :disable-profiling      false
                           :disable-plotting       false})
 

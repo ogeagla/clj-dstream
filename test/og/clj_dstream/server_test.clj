@@ -46,11 +46,11 @@
                         (let [p-data {::core/raw-datum
                                       {::core/position-value [(- 0.8 (/ i 100)) 0.4]
                                        ::core/value          1.0}}]
-                          (println "put data: "
-                                   i
-                                   (clt/rpc-put-data [p-data]))
+                          (println "\nput data idx: " i
+                                   "\nput result state: " (clt/rpc-put-data [p-data]))
                           p-data))
-                      (range 100))]
+                      (range 1000))]
     (doseq [p-datum put-data]
+      (println "The datum:")
       (clojure.pprint/pprint (::core/raw-datum p-datum))
-      (println "Get: " (clt/rpc-predict-cluster-or-outlier (::core/raw-datum p-datum))))))
+      (println "Get cluster result: " (clt/rpc-predict-cluster-or-outlier (::core/raw-datum p-datum))))))

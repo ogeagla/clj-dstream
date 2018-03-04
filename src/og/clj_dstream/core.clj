@@ -259,12 +259,14 @@
   (p ::grid-cell->grid-group
      (let [g              (pos-idxs->graph (keys all-grid-cells))
            conn-comps     (lalg/connected-components g)
-           conns-for-cell (first (filter (fn [adj-group]
-                                           (some #(= %
-                                                     (first
-                                                       (keys the-grid-cell)))
-                                                 adj-group))
-                                         conn-comps))]
+           conns-for-cell (first
+                            (filter
+                              (fn [adj-group]
+                                (some #(= %
+                                          (first
+                                            (keys the-grid-cell)))
+                                      adj-group))
+                              conn-comps))]
        (select-keys all-grid-cells conns-for-cell))))
 
 (defn grid-cell->neighbors [the-grid-cell all-grid-cells]
