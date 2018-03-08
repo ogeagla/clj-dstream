@@ -39,18 +39,23 @@
   (println "\n 2 init state: " (clt/rpc-init-state))
   (println "\n 2 put data: " (clt/rpc-put-data [{::core/raw-datum {::core/position-value [0.2, 0.4] ::core/value 1.0}}])))
 
-(deftest test-put-data
+(deftest test-put-and-predict-data
   (println "set props: " (clt/rpc-set-props props))
   (println "init state: " (clt/rpc-init-state))
-  (let [put-data (map (fn [i]
-                        (let [p-data {::core/raw-datum
-                                      {::core/position-value [(- 0.8 (/ i 100)) 0.4]
-                                       ::core/value          1.0}}]
-                          (println "\nput data idx: " i
-                                   "\nput result state: " (clt/rpc-put-data [p-data]))
-                          p-data))
-                      (range 1000))]
-    (doseq [p-datum put-data]
-      (println "The datum:")
-      (clojure.pprint/pprint (::core/raw-datum p-datum))
-      (println "Get cluster result: " (clt/rpc-predict-cluster-or-outlier (::core/raw-datum p-datum))))))
+  (let [put-data (map
+                   (fn [i]
+                     (let [p-data {::core/raw-datum
+                                   {::core/position-value [(- 0.8 (/ i 10000)) 0.4]
+                                    ::core/value          1.0}}]
+                       (clt/rpc-put-data [p-data])
+                       p-data))
+                   (range 100))
+        clusters (->>
+                   put-data
+                   (map
+                     (fn [d]
+                       (clt/rpc-predict-cluster-or-outlier
+                         (::core/raw-datum d))))
+                   set)]
+    (is (= 1 (count clusters)))
+    (is (not= nil (first (vec clusters))))))
