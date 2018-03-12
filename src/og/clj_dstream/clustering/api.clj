@@ -1,6 +1,6 @@
-(ns og.clj-dstream.api
+(ns og.clj-dstream.clustering.api
   (:require
-    [og.clj-dstream.core :as core]
+    [og.clj-dstream.clustering.core :as core]
     [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
     [og.clj-dstream.visualize :as visualize]))
 

@@ -1,0 +1,6 @@
+version: '2'
+services:
+  dstream-server:
+    image: dstream-server
+    environment:
+      RPC_PORT: "2104"

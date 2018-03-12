@@ -1,4 +1,4 @@
-(ns og.clj-dstream.core
+(ns og.clj-dstream.clustering.core
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]
             [loom.graph :as lgraph]
@@ -507,60 +507,68 @@
         current-cluster))))
 
 (defn adjust-clustering [state t]
-  (log-it [state t] ::adjust-clustering [{:t t}])
-  (let [updated-state* (atom (update-grid-cells state))]
+  (log-it [state t] ::adjust-clustering [{:t          t
+                                          :grid-count (count
+                                                        (::grid-cells state))}])
+  (let [updated-state* (atom
+                         (update-grid-cells state))]
     (doseq [[pos-idx char-vec] (::grid-cells @updated-state*)]
       ;(log-it pos-idx ::adjust-clustering-for-char-vec [{:t t} char-vec])
-      (when (= t (::last-time-label-changed char-vec))
+      (when (= t
+               (::last-time-label-changed
+                 char-vec))
         (do
           ;(log-it pos-idx ::label-changed-this-iteration char-vec)
           (cond
             ;;step 4
-            (= ::sparse (::label char-vec)) (p ::step-four (step-four! char-vec pos-idx updated-state*))
+            (= ::sparse
+               (::label char-vec)) (p ::step-four (step-four! char-vec pos-idx updated-state*))
 
             ;;step 7
-            (= ::dense (::label char-vec)) (p ::step-seven
-                                              (do
-                                                (log-it pos-idx ::step-seven-dense-label char-vec)
-                                                (let [neighbors          (grid-cell->neighbors {pos-idx char-vec} (::grid-cells @updated-state*))
-                                                      neighbors-clusters (->>
-                                                                           neighbors
-                                                                           vals
-                                                                           (map ::cluster)
-                                                                           (remove #(not (is-cluster? %)))
-                                                                           not-empty)]
-                                                  (log-it pos-idx ::step-seven.neighbors.clusters (vec neighbors-clusters))
-                                                  (when neighbors-clusters
-                                                    (let [biggest-neighbor-maps   (->>
-                                                                                    neighbors-clusters
-                                                                                    (pmap (fn [cluster]
-                                                                                            (hash-map
-                                                                                              :cluster cluster
-                                                                                              :cluster-size (cluster->size
-                                                                                                              cluster
-                                                                                                              @updated-state*))))
-                                                                                    )
-                                                          biggest-neighbor        (->> biggest-neighbor-maps
-                                                                                       (sort-by :cluster-size)
-                                                                                       first
-                                                                                       :cluster)
-                                                          grid-w-biggest-neighbor (first
-                                                                                    (keep
-                                                                                      (fn [[neigh-pos-id neigh-char-vec]]
-                                                                                        (if (= biggest-neighbor
-                                                                                               (::cluster neigh-char-vec))
-                                                                                          (hash-map neigh-pos-id neigh-char-vec)))
-                                                                                      neighbors))
-                                                          current-cluster         (::cluster char-vec)
-                                                          neighbor-label          (::label (first (vals grid-w-biggest-neighbor)))]
-                                                      (case neighbor-label
-                                                        ;;step 9
-                                                        ::dense
-                                                        (p ::step-nine (step-nine! current-cluster updated-state* pos-idx biggest-neighbor char-vec))
-                                                        ;;step 15
-                                                        ::transitional
-                                                        (p ::step-fifteen (step-fifteen! current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor))
-                                                        ::sparse nil))))))
+            (= ::dense
+               (::label char-vec)) (p ::step-seven
+                                      (do
+                                        (log-it pos-idx ::step-seven-dense-label char-vec)
+                                        (let [neighbors          (grid-cell->neighbors {pos-idx char-vec}
+                                                                                       (::grid-cells @updated-state*))
+                                              neighbors-clusters (->>
+                                                                   neighbors
+                                                                   vals
+                                                                   (map ::cluster)
+                                                                   (remove #(not (is-cluster? %)))
+                                                                   not-empty)]
+                                          (log-it pos-idx ::step-seven.neighbors.clusters (vec neighbors-clusters))
+                                          (when neighbors-clusters
+                                            (let [biggest-neighbor-maps   (->>
+                                                                            neighbors-clusters
+                                                                            (pmap (fn [cluster]
+                                                                                    (hash-map
+                                                                                      :cluster cluster
+                                                                                      :cluster-size (cluster->size
+                                                                                                      cluster
+                                                                                                      @updated-state*))))
+                                                                            )
+                                                  biggest-neighbor        (->> biggest-neighbor-maps
+                                                                               (sort-by :cluster-size)
+                                                                               first
+                                                                               :cluster)
+                                                  grid-w-biggest-neighbor (first
+                                                                            (keep
+                                                                              (fn [[neigh-pos-id neigh-char-vec]]
+                                                                                (if (= biggest-neighbor
+                                                                                       (::cluster neigh-char-vec))
+                                                                                  (hash-map neigh-pos-id neigh-char-vec)))
+                                                                              neighbors))
+                                                  current-cluster         (::cluster char-vec)
+                                                  neighbor-label          (::label (first (vals grid-w-biggest-neighbor)))]
+                                              (case neighbor-label
+                                                ;;step 9
+                                                ::dense
+                                                (p ::step-nine (step-nine! current-cluster updated-state* pos-idx biggest-neighbor char-vec))
+                                                ;;step 15
+                                                ::transitional
+                                                (p ::step-fifteen (step-fifteen! current-cluster grid-w-biggest-neighbor updated-state* pos-idx char-vec biggest-neighbor))
+                                                ::sparse nil))))))
 
             )
 

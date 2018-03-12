@@ -16,8 +16,9 @@
                  [thi.ng/geom "0.0.1062"]
                  [thinktopic/think.tsne "0.1.1"]
                  [net.mikera/core.matrix "0.62.0"]
-                 [com.taoensso/tufte "1.1.3"]
+                 [com.taoensso/tufte "1.3.0"]
                  [me.raynes/fs "1.4.6"]
                  [slacker "0.17.0"]]
   :target-path "target/%s"
+  :main og.clj-dstream.system
   :profiles {:uberjar {:aot :all}})

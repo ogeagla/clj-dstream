@@ -1,7 +1,7 @@
 (ns og.clj-dstream.crater-test
   (:require [clojure.test :refer :all]
-            [og.clj-dstream.api :as api]
-            [og.clj-dstream.core :as core]
+            [og.clj-dstream.clustering.api :as api]
+            [og.clj-dstream.clustering.core :as core]
             [og.clj-dstream.test-utils :as utils]))
 
 (defn sample-crater-2d [circle-r ring-minor-r ring-major-r]
