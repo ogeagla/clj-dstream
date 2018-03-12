@@ -1,5 +1,5 @@
 (ns og.clj-dstream.test-utils
-  (:require [og.clj-dstream.core :as core]))
+  (:require [og.clj-dstream.clustering.core :as core]))
 
 (def TWO_PI (* 2 (Math/PI)))
 

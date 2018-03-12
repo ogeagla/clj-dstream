@@ -1,6 +1,6 @@
-(ns og.clj-dstream.api
+(ns og.clj-dstream.clustering.api
   (:require
-    [og.clj-dstream.core :as core]
+    [og.clj-dstream.clustering.core :as core]
     [taoensso.tufte :as tufte :refer (defnp p profiled profile)]
     [og.clj-dstream.visualize :as visualize]))
 
@@ -43,12 +43,14 @@
                                                (count
                                                  clusters)
                         :deletion-history-size (count (::core/grid-cell-deletion-history @the-state*))
-                        :top-3-cluster-sizes   (into {}
-                                                     (take 3
-                                                           (sort-by second
-                                                                    (map (fn [c]
-                                                                           [c (core/cluster->size c @the-state*)])
-                                                                         clusters))))
+                        :top-3-cluster-sizes   (into
+                                                 {}
+                                                 (->>
+                                                   clusters
+                                                   (map (fn [c]
+                                                       [c (core/cluster->size c @the-state*)]))
+                                                   (sort-by second)
+                                                   (take 3)))
                         :grid-count            (count (::core/grid-cells @the-state*))
                         :N                     (::core/N (::core/properties @the-state*))}))
         (swap! state-appender*

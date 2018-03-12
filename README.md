@@ -26,6 +26,14 @@ Note: If you install `imagemagick` for your platform, which supplies the command
 
 In addition to the unit tests, there are tests which use generated data, each of which creates an output directory that will contain heatmaps in a time-series for the clusters at a given time and the grid densities at a given time. 
 
+### Integration
+
+You can run integration tests of the RPC server running a DStream clustering server instance:
+
+```bash
+./run_docker_compose_stack.sh
+```
+
 ## Crater Dataset
 
 When faced with data shapes like a crater, which can look like so:

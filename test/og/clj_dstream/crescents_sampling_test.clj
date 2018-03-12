@@ -1,10 +1,10 @@
 (ns og.clj-dstream.crescents-sampling-test
   (:require [clojure.test :refer :all]
-            [og.clj-dstream.core :as core]
+            [og.clj-dstream.clustering.core :as core]
             [og.clj-dstream.test-utils :as utils]
             [clojure.core.matrix.random :as random]
             [og.clj-dstream.visualize :as visualize]
-            [og.clj-dstream.api :as api]))
+            [og.clj-dstream.clustering.api :as api]))
 
 (defn sample-crescents-2d [circle-r ring-minor-r ring-major-r]
   (let [random-thing (rand)]
@@ -36,7 +36,7 @@
                                      (sample-crescents-2d circle-r ring-minor-r ring-major-r)
                         ::core/value 1.0})))
 
-(deftest block-dataset
+(deftest crescents-sampling
   (let [props          {::core/c_m         3.0
                         ::core/c_l         0.8
                         ::core/lambda      0.998

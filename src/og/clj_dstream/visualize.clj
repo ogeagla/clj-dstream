@@ -4,11 +4,11 @@
             [thi.ng.geom.svg.core :as svg]
             [thi.ng.color.core :as col]
             [thi.ng.math.core :as m :refer [PI TWO_PI]]
-            [thi.ng.math.simplexnoise :as n]
+            ;[thi.ng.math.simplexnoise :as n]
             [thi.ng.color.gradients :as grad]
             [think.tsne.core :as tsne]
             [clojure.core.matrix :as matrix]
-            [og.clj-dstream.core :as core]
+            [og.clj-dstream.clustering.core :as core]
             [me.raynes.fs :as fs]
             [clojure.java.shell :refer [sh]]))
 

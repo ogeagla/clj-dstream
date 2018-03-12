@@ -1,6 +1,6 @@
 (ns og.clj-dstream.core-test
   (:require [clojure.test :refer :all]
-            [og.clj-dstream.core :as core]
+            [og.clj-dstream.clustering.core :as core]
             [og.clj-dstream.test-utils :as test-utils]))
 
 (def test-state

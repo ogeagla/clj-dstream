@@ -1,13 +1,11 @@
-(ns og.clj-dstream.server-test
+(ns og.clj-dstream.integration-test
   (:require [clojure.test :refer :all]
-            [og.clj-dstream.system :as srv]
             [og.clj-dstream.server.client :as clt]
             [og.clj-dstream.clustering.core :as core]))
 
 (defn my-test-fixture [f]
-  (srv/start-server 2104)
   (f)
-  (srv/stop-server))
+  )
 
 
 (use-fixtures :each my-test-fixture)
@@ -26,8 +24,7 @@
             ::core/gap-time    5})
 
 
-(deftest test-props-must-be-set
-
+#_(deftest int-test-props-must-be-set
   (is (= :except
          (try
            (println "\n 2 init state: " (clt/rpc-init-state))
@@ -41,19 +38,19 @@
                                                  {::core/position-value
                                                   [0.2, 0.4] ::core/value 1.0}}])))
 
-(deftest test-put-and-predict-data
+#_(deftest int-test-put-and-predict-data
   (println "set props: " (clt/rpc-set-props props))
   (println "init state: " (clt/rpc-init-state))
   (let [put-data (map
                    (fn [i]
                      (let [p-data {::core/raw-datum
                                    {::core/position-value [(- 0.8
-                                                              (/ i 1000))
+                                                              (/ i 100000))
                                                            0.4]
                                     ::core/value          1.0}}]
                        (clt/rpc-put-data [p-data])
                        p-data))
-                   (range 100))
+                   (range 10000))
         clusters (->>
                    put-data
                    (map
