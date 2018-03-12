@@ -4,3 +4,9 @@ services:
     image: dstream-server
     environment:
       RPC_PORT: "2104"
+  dstream-int-test:
+    image: dstream-int-test
+    depends_on:
+      - dstream-server
+    environment:
+      RPC_CLIENT_HOST: "dstream-server"

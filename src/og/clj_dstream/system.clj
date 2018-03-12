@@ -1,5 +1,6 @@
 (ns og.clj-dstream.system
-  (:require [og.clj-dstream.server.system :as srv])
+  (:require [og.clj-dstream.server.system :as srv]
+            [environ.core :refer [env]])
   (:gen-class))
 
 
@@ -11,5 +12,6 @@
 
 (defn -main
   [& args]
-  (println "MAIN: " args)
-  (start-server {:port 2104}))
+  (let [rpc-port (env :rpc-port)]
+    (println "MAIN- rpc-port:" rpc-port)
+    (start-server rpc-port)))
