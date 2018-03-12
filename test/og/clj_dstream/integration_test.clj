@@ -24,7 +24,7 @@
             ::core/gap-time    5})
 
 
-(deftest int-test-props-must-be-set
+#_(deftest int-test-props-must-be-set
   (is (= :except
          (try
            (println "\n 2 init state: " (clt/rpc-init-state))
@@ -38,7 +38,7 @@
                                                  {::core/position-value
                                                   [0.2, 0.4] ::core/value 1.0}}])))
 
-(deftest int-test-put-and-predict-data
+#_(deftest int-test-put-and-predict-data
   (println "set props: " (clt/rpc-set-props props))
   (println "init state: " (clt/rpc-init-state))
   (let [put-data (map
