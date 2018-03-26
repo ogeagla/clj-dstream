@@ -177,8 +177,13 @@
        true
        (let [zipped-truthiness (->> (pmap vector pos-idxs-1 pos-idxs-2)
                                     (pmap (fn [[a b]] (= a b))))]
-         (and (= 1 (count (remove true? zipped-truthiness)))
-              (let [index-of-false (.indexOf zipped-truthiness false)]
+         (and (= 1 (count
+                     (remove
+                       true?
+                       zipped-truthiness)))
+              (let [index-of-false (.indexOf
+                                     zipped-truthiness
+                                     false)]
                 (and
                   (if neigh-dim
                     (= neigh-dim index-of-false)
