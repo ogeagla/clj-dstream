@@ -12,7 +12,8 @@
   "For a state (trained) and a raw datum,
   get the cluster the data would belong to or nil,
   where nil means the datum is an outlier of the model"
-  (let [idx        (core/position-value->position-index (merge raw-datum (::core/properties state)))
+  (let [idx        (core/position-value->position-index
+                     (merge raw-datum (::core/properties state)))
         grid-cells (::core/grid-cells state)]
     (when (contains? grid-cells idx)
       (::core/cluster (get grid-cells idx)))))
@@ -48,7 +49,7 @@
                                                  (->>
                                                    clusters
                                                    (map (fn [c]
-                                                       [c (core/cluster->size c @the-state*)]))
+                                                          [c (core/cluster->size c @the-state*)]))
                                                    (sort-by second)
                                                    (take 3)))
                         :grid-count            (count (::core/grid-cells @the-state*))
