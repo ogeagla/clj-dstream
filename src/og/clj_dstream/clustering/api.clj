@@ -5,7 +5,7 @@
     [og.clj-dstream.visualize :as visualize]))
 
 (defn get-clusters [state]
-  "Get cilantro"
+  "Get clusters"
   (core/state->clusters state))
 
 (defn predict-cluster-or-outlier [raw-datum state]
@@ -32,24 +32,30 @@
                (::core/current-time @the-state*)
                plot-every-nth))
       (do
-        (let [clusters (remove #(not (core/is-cluster? %))
-                               (distinct
-                                 (map ::core/cluster
-                                      (map
-                                        second
-                                        (::core/grid-cells @the-state*)))))]
+        (let [clusters (remove
+                         #(not (core/is-cluster? %))
+                         (distinct
+                           (map ::core/cluster
+                                (map
+                                  second
+                                  (::core/grid-cells @the-state*)))))]
           (core/log-it (::core/current-time @the-state*)
                        ::log-state-periodically
                        {:cluster-count
                                                (count
                                                  clusters)
-                        :deletion-history-size (count (::core/grid-cell-deletion-history @the-state*))
+                        :deletion-history-size (count
+                                                 (::core/grid-cell-deletion-history
+                                                   @the-state*))
                         :top-3-cluster-sizes   (into
                                                  {}
                                                  (->>
                                                    clusters
                                                    (map (fn [c]
-                                                          [c (core/cluster->size c @the-state*)]))
+                                                          [c
+                                                           (core/cluster->size
+                                                             c
+                                                             @the-state*)]))
                                                    (sort-by second)
                                                    (take 3)))
                         :grid-count            (count (::core/grid-cells @the-state*))
@@ -88,7 +94,11 @@
         state-appender* (atom {})
 
         _               (if disable-profiling
-                          (iterate-samples parted-samples the-state* plot-every-nth state-appender*)
+                          (iterate-samples
+                            parted-samples
+                            the-state*
+                            plot-every-nth
+                            state-appender*)
                           (let [[_ prof-stats] (profiled {}
                                                          (iterate-samples
                                                            parted-samples
